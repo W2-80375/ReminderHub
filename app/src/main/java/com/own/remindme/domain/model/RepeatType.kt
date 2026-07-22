@@ -24,3 +24,18 @@ enum class RepeatType {
 
     CUSTOM
 }
+
+val RepeatType.label: String
+    get() = when (this) {
+        RepeatType.NONE -> "None"
+        RepeatType.DAILY -> "Daily"
+        RepeatType.ALTERNATE -> "Alternate"
+        RepeatType.WEEKLY -> "In a week"
+        RepeatType.TWO_WEEKS -> "In 2 weeks"
+        RepeatType.THREE_WEEKS -> "In 3 weeks"
+        RepeatType.MONTHLY -> "In a month"
+        RepeatType.THREE_MONTHS -> "In 3 months"
+        RepeatType.SIX_MONTHS -> "In 6 months"
+        RepeatType.YEARLY -> "In a year"
+        RepeatType.CUSTOM -> "Custom"
+    }

@@ -1,8 +1,6 @@
 package com.own.remindme.presentation.add_reminder
 
-import com.own.remindme.domain.model.Category
-import com.own.remindme.domain.model.Priority
-import com.own.remindme.domain.model.RepeatType
+import com.own.remindme.domain.model.*
 
 sealed class AddReminderEvent {
     data class EnteredTitle(val value: String) : AddReminderEvent()
@@ -12,5 +10,8 @@ sealed class AddReminderEvent {
     data class ChangeRepeatType(val repeatType: RepeatType) : AddReminderEvent()
     data class ChangePriority(val priority: Priority) : AddReminderEvent()
     data class ChangeExpiryDate(val date: Long?) : AddReminderEvent()
+    data class AddAttachment(val uri: String) : AddReminderEvent()
+    data class RemoveAttachment(val uri: String) : AddReminderEvent()
     object SaveReminder : AddReminderEvent()
+    object DeleteReminder : AddReminderEvent()
 }

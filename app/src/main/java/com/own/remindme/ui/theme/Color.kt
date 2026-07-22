@@ -82,10 +82,10 @@ val Info = Color(0xFF1976D2)
    Category Colors
 --------------------------------*/
 
-val MedicineColor = Color(0xFFEF5350)
+val MedicineColor = Color(0xFFFFB300)
 val VehicleColor = Color(0xFF42A5F5)
 val DocumentColor = Color(0xFFAB47BC)
-val BillsColor = Color(0xFFFFB300)
+val BillsColor = Color(0xFFE53935)
 val HealthColor = Color(0xFF26A69A)
 val BirthdayColor = Color(0xFFFF6F91)
 val ShoppingColor = Color(0xFF8BC34A)

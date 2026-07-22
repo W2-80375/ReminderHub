@@ -6,12 +6,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.own.remindme.presentation.components.chip.CategoryChip
-import com.own.remindme.presentation.home.Category
+import com.own.remindme.presentation.home.CategoryUiModel
 
 @Composable
 fun CategoryRow(
 
-    categories: List<Category>,
+    categories: List<CategoryUiModel>,
 
     selected: Int,
 

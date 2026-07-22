@@ -2,6 +2,7 @@ package com.own.remindme.presentation.add_reminder
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.own.remindme.domain.model.Category
@@ -17,7 +18,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AddReminderViewModel @Inject constructor(
-    private val reminderUseCases: ReminderUseCases
+    private val reminderUseCases: ReminderUseCases,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _reminderTitle = mutableStateOf("")
@@ -41,8 +43,36 @@ class AddReminderViewModel @Inject constructor(
     private val _expiryDate = mutableStateOf<Long?>(null)
     val expiryDate: State<Long?> = _expiryDate
 
+    private val _attachmentUris = mutableStateOf<List<String>>(emptyList())
+    val attachmentUris: State<List<String>> = _attachmentUris
+
+    private var _lastTakenTimestamp = mutableStateOf<Long?>(null)
+
+    private var currentReminderId: Long? = null
+
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
+
+    init {
+        savedStateHandle.get<Long>("reminderId")?.let { reminderId ->
+            if (reminderId != -1L) {
+                viewModelScope.launch {
+                    reminderUseCases.getReminder(reminderId)?.also { reminder ->
+                        currentReminderId = reminder.id
+                        _reminderTitle.value = reminder.title
+                        _reminderDescription.value = reminder.description
+                        _reminderCategory.value = reminder.category
+                        _reminderTime.value = reminder.reminderTime
+                        _reminderRepeatType.value = reminder.repeatType
+                        _reminderPriority.value = reminder.priority
+                        _expiryDate.value = reminder.expiryDate
+                        _attachmentUris.value = reminder.imageUris
+                        _lastTakenTimestamp.value = reminder.lastTakenTimestamp
+                    }
+                }
+            }
+        }
+    }
 
     fun onEvent(event: AddReminderEvent) {
         when (event) {
@@ -67,25 +97,59 @@ class AddReminderViewModel @Inject constructor(
             is AddReminderEvent.ChangeExpiryDate -> {
                 _expiryDate.value = event.date
             }
+            is AddReminderEvent.AddAttachment -> {
+                _attachmentUris.value = _attachmentUris.value + event.uri
+            }
+            is AddReminderEvent.RemoveAttachment -> {
+                _attachmentUris.value = _attachmentUris.value.filter { it != event.uri }
+            }
             is AddReminderEvent.SaveReminder -> {
                 viewModelScope.launch {
                     try {
-                        reminderUseCases.addReminder(
-                            Reminder(
-                                title = reminderTitle.value,
-                                description = reminderDescription.value,
-                                reminderTime = reminderTime.value,
-                                category = reminderCategory.value,
-                                repeatType = reminderRepeatType.value,
-                                priority = reminderPriority.value,
-                                completed = false
-                            )
+                        val reminder = Reminder(
+                            id = currentReminderId ?: 0,
+                            title = reminderTitle.value,
+                            description = reminderDescription.value,
+                            reminderTime = reminderTime.value,
+                            category = reminderCategory.value,
+                            repeatType = reminderRepeatType.value,
+                            priority = if (reminderCategory.value == Category.MEDICINE) reminderPriority.value else Priority.MEDIUM,
+                            completed = false,
+                            expiryDate = expiryDate.value,
+                            imageUris = attachmentUris.value,
+                            lastTakenTimestamp = _lastTakenTimestamp.value
                         )
+                        
+                        if (currentReminderId != null) {
+                            reminderUseCases.updateReminder(reminder)
+                        } else {
+                            reminderUseCases.addReminder(reminder)
+                        }
+                        
                         _eventFlow.emit(UiEvent.SaveReminder)
                     } catch (e: Exception) {
                         _eventFlow.emit(
                             UiEvent.ShowSnackbar(
                                 message = e.message ?: "Couldn't save reminder"
+                            )
+                        )
+                    }
+                }
+            }
+            is AddReminderEvent.DeleteReminder -> {
+                viewModelScope.launch {
+                    try {
+                        currentReminderId?.let { id ->
+                            val reminder = reminderUseCases.getReminder(id)
+                            reminder?.let {
+                                reminderUseCases.deleteReminder(it)
+                                _eventFlow.emit(UiEvent.DeleteReminder)
+                            }
+                        }
+                    } catch (e: Exception) {
+                        _eventFlow.emit(
+                            UiEvent.ShowSnackbar(
+                                message = e.message ?: "Couldn't delete reminder"
                             )
                         )
                     }
@@ -97,5 +161,6 @@ class AddReminderViewModel @Inject constructor(
     sealed class UiEvent {
         data class ShowSnackbar(val message: String) : UiEvent()
         object SaveReminder : UiEvent()
+        object DeleteReminder : UiEvent()
     }
 }

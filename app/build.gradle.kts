@@ -69,6 +69,7 @@ android {
 dependencies {
 
     implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.foundation)
 
     // Core
     implementation(libs.androidx.core.ktx)
@@ -86,6 +87,7 @@ dependencies {
 
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.ui.graphics)
     implementation(libs.litert.support.api)
 
     // Navigation
@@ -98,8 +100,10 @@ dependencies {
     implementation(libs.hilt.android)
 
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.hilt.work)
 
     ksp(libs.hilt.compiler)
+    ksp(libs.androidx.hilt.compiler)
 
     // Room
     implementation(libs.room.runtime)
@@ -131,6 +135,8 @@ dependencies {
 
     // Unit Test
     testImplementation(libs.junit)
+    testImplementation(libs.mockk)
+    testImplementation(libs.kotlinx.coroutines.test)
 
     // Android Test
     androidTestImplementation(platform(libs.androidx.compose.bom))

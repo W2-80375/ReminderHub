@@ -27,20 +27,33 @@ import com.own.remindme.presentation.home.components.ReminderItem
 import com.own.remindme.presentation.home.components.SummaryCard
 import com.own.remindme.ui.theme.*
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalFocusManager
+import kotlinx.coroutines.launch
+
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
-    onAddReminderClick: () -> Unit
+    onAddReminderClick: () -> Unit,
+    onReminderClick: (Long) -> Unit,
+    onEditReminderClick: (Long) -> Unit,
+    onNotificationClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
 
     val state by viewModel.uiState.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+    val focusManager = LocalFocusManager.current
 
     val pullRefreshState = rememberPullToRefreshState()
 
     Scaffold(
-
         containerColor = Color.Transparent,
-
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
 
             AnimatedFab(
@@ -71,7 +84,6 @@ fun HomeScreen(
                     .fillMaxSize()
                     .background(DarkBgEnd)
             ) {
-                // Mesh Gradient Effect
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -107,118 +119,134 @@ fun HomeScreen(
                 )
             }
 
-            LazyColumn(
-
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding),
-
-                contentPadding = PaddingValues(20.dp),
-
-                verticalArrangement = Arrangement.spacedBy(20.dp)
-
+                    .padding(padding)
+                    .padding(horizontal = 20.dp)
             ) {
+                Spacer(modifier = Modifier.height(12.dp))
 
-                item {
-
-                    GreetingSection(
-                        greeting = state.greeting
-                    )
-
-                }
-
-                item {
-
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-
-                        SummaryCard(
-                            modifier = Modifier.weight(1f),
-                            title = "Today",
-                            count = state.todayReminders.size,
-                            gradient = SummaryTodayGradient
-                        )
-
-                        SummaryCard(
-                            modifier = Modifier.weight(1f),
-                            title = "Upcoming",
-                            count = state.upcomingReminders.size,
-                            gradient = SummaryUpcomingGradient
-                        )
-
+                GreetingSection(
+                    greeting = state.greeting,
+                    unreadCount = state.unreadNotificationsCount,
+                    onNotificationClick = {
+                        onNotificationClick()
+                    },
+                    onSettingsClick = {
+                        onSettingsClick()
                     }
+                )
 
-                }
+                Spacer(modifier = Modifier.height(12.dp))
 
-                item {
-
-                    HomeSearchBar(
-
-                        value = state.search,
-
-                        onValueChange = {}
-
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    SummaryCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Today",
+                        count = state.todayReminders.size,
+                        gradient = SummaryTodayGradient,
                     )
 
+                    SummaryCard(
+                        modifier = Modifier.weight(1f),
+                        title = "Upcoming",
+                        count = state.upcomingReminders.size,
+                        gradient = SummaryUpcomingGradient,
+                    )
                 }
 
-                item {
+                Spacer(modifier = Modifier.height(12.dp))
 
-                    CategoryRow(
+                HomeSearchBar(
+                    value = state.search,
+                    onValueChange = {
+                        viewModel.onSearchQueryChange(it)
+                    }
+                )
 
-                        categories = state.categories,
+                CategoryRow(
+                    categories = state.categories,
+                    selected = state.selectedCategory,
+                    onCategoryClick = {
+                        viewModel.onCategoryClick(it)
+                    }
+                )
 
-                        selected = state.selectedCategory,
-
-                        onCategoryClick = {
-                            viewModel.onCategoryClick(it)
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) {
+                            detectTapGestures(onTap = {
+                                focusManager.clearFocus()
+                            })
+                        },
+                    contentPadding = PaddingValues(
+                        bottom = 100.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (state.todayReminders.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "Today's Reminders"
+                            )
                         }
 
-                    )
-
-                }
-
-                item {
-
-                    SectionHeader(
-                        title = "Today's Reminders"
-                    )
-
-                }
-
-                if (state.todayReminders.isEmpty()) {
-
-                    item {
-
-                        EmptyState()
-
+                        items(state.todayReminders) {
+                            ReminderItem(
+                                reminder = it,
+                                onClick = { onReminderClick(it.id.toLong()) },
+                                onEditClick = { onEditReminderClick(it.id.toLong()) },
+                                onDeleteClick = {
+                                    viewModel.deleteReminder(it)
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Reminder deleted")
+                                    }
+                                },
+                                onTakenClick = {
+                                    viewModel.toggleTaken(it)
+                                }
+                            )
+                        }
+                    } else if (state.upcomingReminders.isEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "Today's Reminders"
+                            )
+                        }
+                        item {
+                            EmptyState()
+                        }
                     }
 
-                } else {
+                    if (state.upcomingReminders.isNotEmpty()) {
+                        item {
+                            SectionHeader(
+                                title = "Upcoming"
+                            )
+                        }
 
-                    items(state.todayReminders) {
-
-                        ReminderItem(reminder = it)
-
+                        items(state.upcomingReminders) {
+                            ReminderItem(
+                                reminder = it,
+                                onClick = { onReminderClick(it.id.toLong()) },
+                                onEditClick = { onEditReminderClick(it.id.toLong()) },
+                                onDeleteClick = {
+                                    viewModel.deleteReminder(it)
+                                    scope.launch {
+                                        snackbarHostState.showSnackbar("Reminder deleted")
+                                    }
+                                },
+                                onTakenClick = {
+                                    viewModel.toggleTaken(it)
+                                }
+                            )
+                        }
                     }
-
                 }
-
-                item {
-
-                    SectionHeader(
-                        title = "Upcoming"
-                    )
-
-                }
-
-                items(state.upcomingReminders) {
-
-                    ReminderItem(reminder = it)
-
-                }
-
             }
 
         }

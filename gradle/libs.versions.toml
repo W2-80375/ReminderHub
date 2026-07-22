@@ -29,6 +29,9 @@ splash = "1.0.1"
 materialIcons = "1.7.8"
 material3 = "1.4.0"
 litertSupportApi = "1.4.2"
+uiGraphics = "1.11.4"
+mockk = "1.13.13"
+foundation = "1.11.4"
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -54,6 +57,9 @@ hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.re
 
 hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version = "1.2.0" }
 
+hilt-work = { module = "androidx.hilt:hilt-work", version = "1.2.0" }
+androidx-hilt-compiler = { module = "androidx.hilt:hilt-compiler", version = "1.2.0" }
+
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
 
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
@@ -75,6 +81,11 @@ splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "spla
 material-icons = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIcons" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 litert-support-api = { group = "com.google.ai.edge.litert", name = "litert-support-api", version.ref = "litertSupportApi" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics", version.ref = "uiGraphics" }
+
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutines" }
+androidx-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version.ref = "foundation" }
 
 [plugins]
 android-application = { id = "com.android.application", version = "8.12.0" }

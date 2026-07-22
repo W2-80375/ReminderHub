@@ -8,13 +8,15 @@ data class HomeUiState(
 
     val search: String = "",
 
-    val categories: List<Category> = emptyList(),
+    val categories: List<CategoryUiModel> = emptyList(),
 
     val selectedCategory: Int = 0,
 
     val todayReminders: List<ReminderUiModel> = emptyList(),
 
     val upcomingReminders: List<ReminderUiModel> = emptyList(),
+
+    val unreadNotificationsCount: Int = 0,
 
     val isRefreshing: Boolean = false,
 

@@ -12,7 +12,13 @@ fun HomePreview() {
 
     ReminderTheme {
 
-        HomeScreen(onAddReminderClick = {})
+        HomeScreen(
+            onAddReminderClick = {},
+            onReminderClick = {},
+            onEditReminderClick = {},
+            onNotificationClick = {},
+            onSettingsClick = {}
+        )
 
     }
 

@@ -27,9 +27,9 @@ fun CategoryChip(
     onClick: () -> Unit
 ) {
     val gradient = when (color) {
-        com.own.remindme.ui.theme.MedicineColor -> com.own.remindme.ui.theme.GradientRed
+        com.own.remindme.ui.theme.MedicineColor -> com.own.remindme.ui.theme.GradientAmber
         com.own.remindme.ui.theme.VehicleColor -> com.own.remindme.ui.theme.GradientBlue
-        com.own.remindme.ui.theme.BillsColor -> com.own.remindme.ui.theme.GradientAmber
+        com.own.remindme.ui.theme.BillsColor -> com.own.remindme.ui.theme.GradientRed
         com.own.remindme.ui.theme.DocumentColor -> com.own.remindme.ui.theme.GradientPurple
         else -> listOf(Primary, Primary.copy(alpha = 0.8f))
     }

@@ -2,6 +2,7 @@ package com.own.remindme.di
 
 import android.content.Context
 import androidx.room.Room
+import com.own.remindme.data.local.NotificationDao
 import com.own.remindme.data.local.ReminderDao
 import com.own.remindme.data.local.ReminderDatabase
 import dagger.Module
@@ -37,6 +38,16 @@ object DatabaseModule {
     ): ReminderDao {
 
         return database.reminderDao()
+
+    }
+
+    @Provides
+    @Singleton
+    fun provideNotificationDao(
+        database: ReminderDatabase
+    ): NotificationDao {
+
+        return database.notificationDao()
 
     }
 }

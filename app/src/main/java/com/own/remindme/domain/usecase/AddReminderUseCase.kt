@@ -7,10 +7,10 @@ import javax.inject.Inject
 class AddReminderUseCase @Inject constructor(
     private val repository: ReminderRepository
 ) {
-    suspend operator fun invoke(reminder: Reminder) {
+    suspend operator fun invoke(reminder: Reminder): Long {
         if (reminder.title.isBlank()) {
             throw Exception("The title of the reminder can't be empty.")
         }
-        repository.insert(reminder)
+        return repository.insert(reminder)
     }
 }

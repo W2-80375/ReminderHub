@@ -23,7 +23,7 @@ fun SectionHeader(
 
         Text(
             text = title,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleMedium,
             color = DarkText
         )
 

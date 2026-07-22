@@ -1,15 +1,15 @@
 package com.own.remindme.presentation.home
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import com.own.remindme.ui.theme.AppIcon
 
-data class Category(
+data class CategoryUiModel(
 
     val id: Int,
 
     val title: String,
 
-    val icon: ImageVector,
+    val icon: AppIcon,
 
     val color: Color
 
