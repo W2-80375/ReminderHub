@@ -25,7 +25,7 @@ fun EmptyState(
             imageVector = Icons.Default.EventBusy,
             contentDescription = "No reminders",
             modifier = Modifier.size(56.dp),
-            tint = Color(0xFF8B5CF6)
+            tint = Color(0xFFFFFFFF)
         )
 
         Spacer(modifier = Modifier.height(12.dp))

@@ -259,8 +259,8 @@ fun ReminderDetailScreen(
                     Box(modifier = Modifier.weight(1f)) {
                         DetailItem(
                             icon = Icons.Default.Schedule,
-                            label = "Time",
-                            value = timeFormat.format(Date(rem.reminderTime))
+                            label = if (rem.reminderTimes.size > 1) "Times" else "Time",
+                            value = rem.reminderTimes.sorted().joinToString(", ") { timeFormat.format(Date(it)) }
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))

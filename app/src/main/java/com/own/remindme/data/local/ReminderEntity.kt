@@ -10,7 +10,7 @@ data class ReminderEntity(
     val title: String,
     val description: String,
     val category: String,
-    val reminderTime: Long,
+    val reminderTimes: List<Long>,
     val repeatType: String,
     val priority: String,
     val completed: Boolean,

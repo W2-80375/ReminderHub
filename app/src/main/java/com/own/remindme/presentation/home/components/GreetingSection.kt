@@ -64,7 +64,7 @@ fun GreetingSection(
                     if (unreadCount > 0) {
                         Box(
                             modifier = Modifier
-                                .size(10.dp)
+                                .size(14.dp)
                                 .align(Alignment.TopEnd)
                                 .clip(CircleShape)
                                 .background(Color.Red),

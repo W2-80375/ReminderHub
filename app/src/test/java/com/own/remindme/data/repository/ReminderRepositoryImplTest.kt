@@ -33,7 +33,7 @@ class ReminderRepositoryImplTest {
                 title = "Test",
                 description = "Desc",
                 category = "MEDICINE",
-                reminderTime = 123456789,
+                reminderTimes = listOf(123456789),
                 repeatType = "NONE",
                 priority = "MEDIUM",
                 completed = false

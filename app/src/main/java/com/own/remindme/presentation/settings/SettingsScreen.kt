@@ -393,7 +393,7 @@ fun SoundRecorderRow(
             )
         }
         
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(17.dp)) {
             if (hasSound && !isRecording) {
                 IconButton(
                     onClick = onPlayClick,

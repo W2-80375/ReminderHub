@@ -85,13 +85,13 @@ class HomeViewModel @Inject constructor(
             // 1. Everything scheduled for today (past or future today)
             // 2. Everything from the past that is NOT completed (Overdue)
             val today = reminders.filter { 
-                (it.reminderTime in todayStart until todayEnd) || 
-                (it.reminderTime < todayStart && !it.completed) 
+                it.reminderTimes.any { time -> (time in todayStart until todayEnd) } || 
+                (it.reminderTimes.all { time -> time < todayStart } && !it.completed) 
             }
             
             // Upcoming section includes:
             // 1. Everything scheduled for tomorrow onwards
-            val upcoming = reminders.filter { it.reminderTime >= todayEnd }
+            val upcoming = reminders.filter { it.reminderTimes.any { time -> time >= todayEnd } }
 
             val uiToday = today.map { it.toUiModel() }
             val uiUpcoming = upcoming.map { it.toUiModel() }
@@ -256,10 +256,15 @@ class HomeViewModel @Inject constructor(
         }.timeInMillis
         val todayEnd = todayStart + 24 * 60 * 60 * 1000
 
+        val mainTime = reminderTimes.minOrNull() ?: 0L
+
         val displayDate = when {
-            reminderTime in todayStart until todayEnd -> timeFormat.format(java.util.Date(reminderTime))
-            reminderTime < todayStart -> "Overdue: ${dateFormat.format(java.util.Date(reminderTime))}"
-            else -> dateFormat.format(java.util.Date(reminderTime)) + ", " + timeFormat.format(java.util.Date(reminderTime))
+            reminderTimes.any { it in todayStart until todayEnd } -> {
+                val todayTimes = reminderTimes.filter { it in todayStart until todayEnd }.sorted()
+                todayTimes.joinToString(", ") { timeFormat.format(java.util.Date(it)) }
+            }
+            mainTime < todayStart -> "Overdue: ${dateFormat.format(java.util.Date(mainTime))}"
+            else -> dateFormat.format(java.util.Date(mainTime)) + ", " + timeFormat.format(java.util.Date(mainTime))
         }
 
         return ReminderUiModel(

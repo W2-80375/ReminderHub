@@ -184,9 +184,9 @@ fun HomeScreen(
                             })
                         },
                     contentPadding = PaddingValues(
-                        bottom = 100.dp
+                        bottom = 150.dp
                     ),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
                     if (state.todayReminders.isNotEmpty()) {
                         item {

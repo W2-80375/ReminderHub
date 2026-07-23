@@ -31,7 +31,7 @@ fun NavGraph() {
 
             SplashScreen {
 
-                navController.navigate(Screen.Onboarding.route) {
+                navController.navigate(Screen.Home.route) {
                     popUpTo(Screen.Splash.route) {
                         inclusive = true
                     }

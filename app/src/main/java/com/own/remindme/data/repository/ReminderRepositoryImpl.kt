@@ -34,17 +34,19 @@ class ReminderRepositoryImpl @Inject constructor(
     override suspend fun insert(reminder: Reminder): Long {
         val id = dao.insert(reminder.toEntity())
         
-        // Schedule notification for reminder time
-        NotificationScheduler.scheduleNotification(
-            context = context,
-            id = id.toInt(),
-            title = "Reminder: ${reminder.title}",
-            message = reminder.description,
-            timeInMillis = reminder.reminderTime,
-            frequency = reminder.repeatType.label,
-            priority = reminder.priority,
-            category = reminder.category
-        )
+        // Schedule notifications for all reminder times
+        reminder.reminderTimes.forEachIndexed { index, time ->
+            NotificationScheduler.scheduleNotification(
+                context = context,
+                id = id.toInt() + (index * 1000), // Unique ID for each time slot
+                title = "Reminder: ${reminder.title}",
+                message = reminder.description,
+                timeInMillis = time,
+                frequency = reminder.repeatType.label,
+                priority = reminder.priority,
+                category = reminder.category
+            )
+        }
 
         // Schedule notification for expiry date if it exists
         reminder.expiryDate?.let { expiry ->
@@ -64,17 +66,24 @@ class ReminderRepositoryImpl @Inject constructor(
     override suspend fun update(reminder: Reminder) {
         dao.update(reminder.toEntity())
         
-        // Reschedule notification for reminder time
-        NotificationScheduler.scheduleNotification(
-            context = context,
-            id = reminder.id.toInt(),
-            title = "Reminder: ${reminder.title}",
-            message = reminder.description,
-            timeInMillis = reminder.reminderTime,
-            frequency = reminder.repeatType.label,
-            priority = reminder.priority,
-            category = reminder.category
-        )
+        // First cancel existing notifications for all potential slots (up to 10)
+        for (i in 0 until 10) {
+            NotificationScheduler.cancelNotification(context, reminder.id.toInt() + (i * 1000))
+        }
+
+        // Reschedule notifications for all current reminder times
+        reminder.reminderTimes.forEachIndexed { index, time ->
+            NotificationScheduler.scheduleNotification(
+                context = context,
+                id = reminder.id.toInt() + (index * 1000),
+                title = "Reminder: ${reminder.title}",
+                message = reminder.description,
+                timeInMillis = time,
+                frequency = reminder.repeatType.label,
+                priority = reminder.priority,
+                category = reminder.category
+            )
+        }
 
         // Reschedule notification for expiry date if it exists
         reminder.expiryDate?.let { expiry ->
@@ -91,7 +100,10 @@ class ReminderRepositoryImpl @Inject constructor(
 
     override suspend fun delete(reminder: Reminder) {
         dao.delete(reminder.toEntity())
-        NotificationScheduler.cancelNotification(context, reminder.id.toInt())
+        // Cancel all potential slots (up to 10)
+        for (i in 0 until 10) {
+            NotificationScheduler.cancelNotification(context, reminder.id.toInt() + (i * 1000))
+        }
         NotificationScheduler.cancelNotification(context, reminder.id.toInt() + 1000000)
     }
 }

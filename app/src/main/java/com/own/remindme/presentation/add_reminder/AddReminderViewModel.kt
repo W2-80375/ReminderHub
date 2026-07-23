@@ -31,8 +31,8 @@ class AddReminderViewModel @Inject constructor(
     private val _reminderCategory = mutableStateOf(Category.MEDICINE)
     val reminderCategory: State<Category> = _reminderCategory
 
-    private val _reminderTime = mutableStateOf(System.currentTimeMillis())
-    val reminderTime: State<Long> = _reminderTime
+    private val _reminderTimes = mutableStateOf<List<Long>>(listOf(System.currentTimeMillis()))
+    val reminderTimes: State<List<Long>> = _reminderTimes
 
     private val _reminderRepeatType = mutableStateOf(RepeatType.NONE)
     val reminderRepeatType: State<RepeatType> = _reminderRepeatType
@@ -48,7 +48,8 @@ class AddReminderViewModel @Inject constructor(
 
     private var _lastTakenTimestamp = mutableStateOf<Long?>(null)
 
-    private var currentReminderId: Long? = null
+    private val _currentReminderId = mutableStateOf<Long?>(null)
+    val isEditMode: Boolean get() = _currentReminderId.value != null
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow.asSharedFlow()
@@ -58,11 +59,11 @@ class AddReminderViewModel @Inject constructor(
             if (reminderId != -1L) {
                 viewModelScope.launch {
                     reminderUseCases.getReminder(reminderId)?.also { reminder ->
-                        currentReminderId = reminder.id
+                        _currentReminderId.value = reminder.id
                         _reminderTitle.value = reminder.title
                         _reminderDescription.value = reminder.description
                         _reminderCategory.value = reminder.category
-                        _reminderTime.value = reminder.reminderTime
+                        _reminderTimes.value = reminder.reminderTimes
                         _reminderRepeatType.value = reminder.repeatType
                         _reminderPriority.value = reminder.priority
                         _expiryDate.value = reminder.expiryDate
@@ -85,8 +86,20 @@ class AddReminderViewModel @Inject constructor(
             is AddReminderEvent.ChangeCategory -> {
                 _reminderCategory.value = event.category
             }
-            is AddReminderEvent.ChangeTime -> {
-                _reminderTime.value = event.time
+            is AddReminderEvent.AddTime -> {
+                _reminderTimes.value = _reminderTimes.value + event.time
+            }
+            is AddReminderEvent.RemoveTime -> {
+                if (_reminderTimes.value.size > 1) {
+                    val newList = _reminderTimes.value.toMutableList()
+                    newList.removeAt(event.index)
+                    _reminderTimes.value = newList
+                }
+            }
+            is AddReminderEvent.UpdateTime -> {
+                val newList = _reminderTimes.value.toMutableList()
+                newList[event.index] = event.time
+                _reminderTimes.value = newList
             }
             is AddReminderEvent.ChangeRepeatType -> {
                 _reminderRepeatType.value = event.repeatType
@@ -100,27 +113,45 @@ class AddReminderViewModel @Inject constructor(
             is AddReminderEvent.AddAttachment -> {
                 _attachmentUris.value = _attachmentUris.value + event.uri
             }
+            is AddReminderEvent.AddAttachments -> {
+                _attachmentUris.value = _attachmentUris.value + event.uris
+            }
             is AddReminderEvent.RemoveAttachment -> {
                 _attachmentUris.value = _attachmentUris.value.filter { it != event.uri }
             }
             is AddReminderEvent.SaveReminder -> {
+                if (reminderTitle.value.isBlank()) {
+                    viewModelScope.launch {
+                        _eventFlow.emit(UiEvent.ShowSnackbar("Title is mandatory"))
+                    }
+                    return
+                }
+                
+                // Frequency mandatory (not NONE or CUSTOM as they are removed from UI)
+                if (reminderRepeatType.value == RepeatType.NONE || reminderRepeatType.value == RepeatType.CUSTOM) {
+                    viewModelScope.launch {
+                        _eventFlow.emit(UiEvent.ShowSnackbar("Please select a frequency"))
+                    }
+                    return
+                }
+
                 viewModelScope.launch {
                     try {
                         val reminder = Reminder(
-                            id = currentReminderId ?: 0,
+                            id = _currentReminderId.value ?: 0,
                             title = reminderTitle.value,
                             description = reminderDescription.value,
-                            reminderTime = reminderTime.value,
+                            reminderTimes = reminderTimes.value,
                             category = reminderCategory.value,
                             repeatType = reminderRepeatType.value,
-                            priority = if (reminderCategory.value == Category.MEDICINE) reminderPriority.value else Priority.MEDIUM,
+                            priority = reminderPriority.value,
                             completed = false,
                             expiryDate = expiryDate.value,
                             imageUris = attachmentUris.value,
                             lastTakenTimestamp = _lastTakenTimestamp.value
                         )
                         
-                        if (currentReminderId != null) {
+                        if (_currentReminderId.value != null) {
                             reminderUseCases.updateReminder(reminder)
                         } else {
                             reminderUseCases.addReminder(reminder)
@@ -139,7 +170,7 @@ class AddReminderViewModel @Inject constructor(
             is AddReminderEvent.DeleteReminder -> {
                 viewModelScope.launch {
                     try {
-                        currentReminderId?.let { id ->
+                        _currentReminderId.value?.let { id ->
                             val reminder = reminderUseCases.getReminder(id)
                             reminder?.let {
                                 reminderUseCases.deleteReminder(it)

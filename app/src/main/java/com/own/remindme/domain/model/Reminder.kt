@@ -5,7 +5,7 @@ data class Reminder(
     val title: String,
     val description: String,
     val category: Category,
-    val reminderTime: Long,
+    val reminderTimes: List<Long>,
     val repeatType: RepeatType,
     val priority: Priority,
     val completed: Boolean,
