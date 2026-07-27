@@ -1,6 +1,7 @@
 package com.own.remindme.presentation.home
 
 import com.own.remindme.domain.model.*
+import com.own.remindme.domain.repository.NotificationRepository
 import com.own.remindme.domain.repository.UserPreferences
 import com.own.remindme.domain.repository.UserPreferencesRepository
 import com.own.remindme.domain.usecase.*
@@ -22,6 +23,7 @@ class HomeViewModelTest {
     private lateinit var getAllRemindersUseCase: GetAllRemindersUseCase
     private lateinit var addReminderUseCase: AddReminderUseCase
     private lateinit var userPreferencesRepository: UserPreferencesRepository
+    private lateinit var notificationRepository: NotificationRepository
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -35,6 +37,7 @@ class HomeViewModelTest {
         val updateReminderUseCase: UpdateReminderUseCase = mockk()
         val deleteReminderUseCase: DeleteReminderUseCase = mockk()
         userPreferencesRepository = mockk()
+        notificationRepository = mockk()
         
         reminderUseCases = ReminderUseCases(
             getAllReminders = getAllRemindersUseCase,
@@ -46,6 +49,7 @@ class HomeViewModelTest {
 
         every { getAllRemindersUseCase() } returns flowOf(emptyList())
         every { userPreferencesRepository.userPreferencesFlow } returns flowOf(UserPreferences())
+        every { notificationRepository.getUnreadCount() } returns flowOf(0)
     }
 
     @After
@@ -55,7 +59,11 @@ class HomeViewModelTest {
 
     @Test
     fun `initial state is correct`() = runTest {
-        viewModel = HomeViewModel(reminderUseCases, userPreferencesRepository)
+        viewModel = HomeViewModel(
+            reminderUseCases,
+            userPreferencesRepository,
+            notificationRepository
+        )
         
         val state = viewModel.uiState.value
         assertEquals("", state.search)
@@ -65,7 +73,11 @@ class HomeViewModelTest {
 
     @Test
     fun `onCategoryClick updates selected category`() = runTest {
-        viewModel = HomeViewModel(reminderUseCases, userPreferencesRepository)
+        viewModel = HomeViewModel(
+            reminderUseCases,
+            userPreferencesRepository,
+            notificationRepository
+        )
         
         viewModel.onCategoryClick(1)
         
@@ -74,7 +86,11 @@ class HomeViewModelTest {
 
     @Test
     fun `onSearchQueryChange updates search state`() = runTest {
-        viewModel = HomeViewModel(reminderUseCases, userPreferencesRepository)
+        viewModel = HomeViewModel(
+            reminderUseCases,
+            userPreferencesRepository,
+            notificationRepository
+        )
         
         viewModel.onSearchQueryChange("test")
         

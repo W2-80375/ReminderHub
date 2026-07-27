@@ -6,13 +6,14 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.own.remindme.ui.theme.DarkText
+import androidx.compose.ui.graphics.Color
 
 @Composable
 fun SectionHeader(
     title: String,
     actionText: String? = null,
-    onActionClick: (() -> Unit)? = null
+    onActionClick: (() -> Unit)? = null,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface
 ) {
 
     Row(
@@ -24,14 +25,14 @@ fun SectionHeader(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = DarkText
+            color = titleColor
         )
 
         if (actionText != null && onActionClick != null) {
 
             Text(
                 text = actionText,
-                color = DarkText.copy(alpha = 0.6f)
+                color = titleColor.copy(alpha = 0.6f)
             )
         }
     }

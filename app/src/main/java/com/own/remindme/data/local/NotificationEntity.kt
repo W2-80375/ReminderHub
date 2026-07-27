@@ -11,5 +11,6 @@ data class NotificationEntity(
     val message: String,
     val timestamp: Long,
     val frequency: String,
+    val category: String = "CUSTOM",
     val isRead: Boolean = false
 )

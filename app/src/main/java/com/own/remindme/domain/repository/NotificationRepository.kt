@@ -9,4 +9,5 @@ interface NotificationRepository {
     suspend fun markAsRead(id: Long)
     suspend fun markAllAsRead()
     suspend fun deleteNotification(notification: NotificationEntity)
+    suspend fun deleteAllNotifications()
 }

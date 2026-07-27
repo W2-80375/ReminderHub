@@ -4,11 +4,13 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -34,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.border
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,6 +46,7 @@ import com.own.remindme.domain.model.Category
 import com.own.remindme.domain.model.Priority
 import com.own.remindme.domain.model.RepeatType
 import com.own.remindme.domain.model.label
+import com.own.remindme.presentation.add_reminder.components.AiVoiceAssistantView
 import com.own.remindme.ui.theme.*
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
@@ -58,12 +62,20 @@ fun AddReminderScreen(
 ) {
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val isDark = LocalDarkTheme.current
+    val cardColor = if (isDark) DarkCard else Color.White
+
     var showAttachmentDialog by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
     var editingTimeIndex by remember { mutableStateOf<Int?>(null) }
     var showExpiryDatePicker by remember { mutableStateOf(false) }
     var tempImageUri by remember { mutableStateOf<Uri?>(null) }
     
+    val convState by viewModel.convState.collectAsState()
+    val aiRecognizedText by viewModel.aiRecognizedText.collectAsState()
+    val aiResponse by viewModel.aiResponse.collectAsState()
+
     var isVoiceMode by remember { mutableStateOf(false) }
 
     val filePickerLauncher = rememberLauncherForActivityResult(
@@ -106,6 +118,17 @@ fun AddReminderScreen(
         }
     )
 
+    val recordAudioPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult = { isGranted ->
+            if (isGranted) {
+                viewModel.onEvent(AddReminderEvent.ToggleAiListening)
+            } else {
+                Toast.makeText(context, "Microphone permission is required for AI Speak", Toast.LENGTH_SHORT).show()
+            }
+        }
+    )
+
     LaunchedEffect(key1 = true) {
         viewModel.eventFlow.collectLatest { event ->
             when (event) {
@@ -132,13 +155,13 @@ fun AddReminderScreen(
                 title = { 
                     Text(
                         text = if (viewModel.isEditMode) "Edit Reminder" else "Add Reminder", 
-                        color = DarkText
+                        color = onSurface
                     ) 
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    navigationIconContentColor = DarkText,
-                    titleContentColor = DarkText
+                    navigationIconContentColor = onSurface,
+                    titleContentColor = onSurface
                 ),
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
@@ -155,7 +178,7 @@ fun AddReminderScreen(
                         }
                     }
                     IconButton(onClick = { viewModel.onEvent(AddReminderEvent.SaveReminder) }) {
-                        Icon(Icons.Default.Save, contentDescription = "Save", tint = DarkText)
+                        Icon(Icons.Default.Save, contentDescription = "Save", tint = onSurface)
                     }
                 }
             )
@@ -164,7 +187,12 @@ fun AddReminderScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd)))
+                .background(
+                    if (isDark) 
+                        Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd))
+                    else
+                        Brush.verticalGradient(colors = listOf(Color.White, Color.White))
+                )
         )
 
         Column(
@@ -175,35 +203,44 @@ fun AddReminderScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Entry Mode Toggle
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(DarkCard.copy(alpha = 0.5f))
-                    .padding(4.dp),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                listOf(false to "Manual", true to "AI Speak").forEach { (mode, label) ->
-                    val selected = isVoiceMode == mode
-                    Box(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(if (selected) Primary else Color.Transparent)
-                            .clickable { isVoiceMode = mode }
-                            .padding(vertical = 8.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (mode) Icon(Icons.Default.Mic, null, tint = Color.White, modifier = Modifier.size(16.dp).padding(end = 4.dp))
-                            Text(
-                                text = label,
-                                color = if (selected) Color.White else DarkText.copy(alpha = 0.6f),
-                                fontSize = 13.sp,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
-                            )
+            // Entry Mode Toggle - Only shown when adding a new reminder
+            if (!viewModel.isEditMode) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(cardColor.copy(alpha = if (isDark) 0.5f else 0.8f))
+                        .padding(4.dp),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    listOf(false to "Manual", true to "AI Speak").forEach { (mode, label) ->
+                        val selected = isVoiceMode == mode
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(if (selected) Primary else Color.Transparent)
+                                .clickable { isVoiceMode = mode }
+                                .padding(vertical = 8.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (mode) Icon(
+                                    Icons.Default.Mic,
+                                    null,
+                                    tint = Color.White,
+                                    modifier = Modifier
+                                        .size(16.dp)
+                                        .padding(end = 4.dp)
+                                )
+                                Text(
+                                    text = label,
+                                    color = if (selected) Color.White else onSurface.copy(alpha = 0.6f),
+                                    fontSize = 13.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
                         }
                     }
                 }
@@ -214,11 +251,21 @@ fun AddReminderScreen(
                 enter = fadeIn() + expandVertically(),
                 exit = fadeOut() + shrinkVertically()
             ) {
-//                AiVoiceAssistantView(
-//                    onReminderCreated = {
-//                        // Handle voice-created reminder
-//                    }
-//                )
+                AiVoiceAssistantView(
+                    state = convState,
+                    recognizedText = aiRecognizedText,
+                    aiResponse = aiResponse,
+                    onStartListening = {
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                            viewModel.onEvent(AddReminderEvent.ToggleAiListening)
+                        } else {
+                            recordAudioPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+                        }
+                    },
+                    onStopListening = {
+                        viewModel.onEvent(AddReminderEvent.ToggleAiListening)
+                    }
+                )
             }
 
             AnimatedVisibility(
@@ -251,7 +298,12 @@ fun AddReminderScreen(
                                     .fillMaxWidth()
                                     .height(44.dp)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(DarkCard)
+                                    .background(cardColor)
+                                    .border(
+                                        width = if (isDark) 0.dp else 1.dp,
+                                        color = if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.05f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
                                     .clickable { showDatePicker = true }
                                     .padding(horizontal = 12.dp),
                                 contentAlignment = Alignment.CenterStart
@@ -261,7 +313,7 @@ fun AddReminderScreen(
                                     Spacer(Modifier.width(8.dp))
                                     Text(
                                         text = SimpleDateFormat("MMM dd, yyyy", LocalLocale.current.platformLocale).format(Date(viewModel.reminderTimes.value.firstOrNull() ?: System.currentTimeMillis())),
-                                        color = DarkText,
+                                        color = onSurface,
                                         fontSize = 14.sp
                                     )
                                 }
@@ -281,7 +333,12 @@ fun AddReminderScreen(
                                         .weight(1f)
                                         .height(44.dp)
                                         .clip(RoundedCornerShape(12.dp))
-                                        .background(DarkCard)
+                                        .background(cardColor)
+                                        .border(
+                                            width = if (isDark) 0.dp else 1.dp,
+                                            color = if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.05f),
+                                            shape = RoundedCornerShape(12.dp)
+                                        )
                                         .clickable { editingTimeIndex = index }
                                         .padding(horizontal = 12.dp),
                                     contentAlignment = Alignment.CenterStart
@@ -291,7 +348,7 @@ fun AddReminderScreen(
                                         Spacer(Modifier.width(8.dp))
                                         Text(
                                             text = SimpleDateFormat("hh:mm a", LocalLocale.current.platformLocale).format(Date(time)),
-                                            color = DarkText,
+                                            color = onSurface,
                                             fontSize = 14.sp
                                         )
                                     }
@@ -301,7 +358,7 @@ fun AddReminderScreen(
                                         onClick = { viewModel.onEvent(AddReminderEvent.RemoveTime(index)) },
                                         modifier = Modifier
                                             .size(44.dp)
-                                            .background(DarkCard, RoundedCornerShape(12.dp))
+                                            .background(cardColor, RoundedCornerShape(12.dp))
                                     ) {
                                         Icon(Icons.Default.Remove, null, tint = Color.Red.copy(alpha = 0.7f))
                                     }
@@ -311,7 +368,7 @@ fun AddReminderScreen(
                                         onClick = { viewModel.onEvent(AddReminderEvent.AddTime(System.currentTimeMillis())) },
                                         modifier = Modifier
                                             .size(44.dp)
-                                            .background(DarkCard, RoundedCornerShape(12.dp))
+                                            .background(cardColor, RoundedCornerShape(12.dp))
                                     ) {
                                         Icon(Icons.Default.Add, null, tint = Primary)
                                     }
@@ -344,10 +401,14 @@ fun AddReminderScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = categoryColor,
                                     selectedLabelColor = Color.White,
-                                    containerColor = DarkCard,
-                                    labelColor = DarkText.copy(alpha = 0.6f)
+                                    containerColor = cardColor,
+                                    labelColor = onSurface.copy(alpha = 0.6f)
                                 ),
-                                border = null
+                                border = if (isDark) null else FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = selected,
+                                    borderColor = Color.Black.copy(alpha = 0.05f)
+                                )
                             )
                         }
                     }
@@ -366,38 +427,48 @@ fun AddReminderScreen(
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = Primary,
                                     selectedLabelColor = Color.White,
-                                    containerColor = DarkCard,
-                                    labelColor = DarkText.copy(alpha = 0.6f)
+                                    containerColor = cardColor,
+                                    labelColor = onSurface.copy(alpha = 0.6f)
                                 ),
-                                border = null
+                                border = if (isDark) null else FilterChipDefaults.filterChipBorder(
+                                    enabled = true,
+                                    selected = selected,
+                                    borderColor = Color.Black.copy(alpha = 0.05f)
+                                )
                             )
                         }
                     }
 
-                    TopicText("Priority")
-                    LazyRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        contentPadding = PaddingValues(horizontal = 4.dp)
-                    ) {
-                        items(Priority.entries) { priority ->
-                            val selected = viewModel.reminderPriority.value == priority
-                            val priorityColor = when (priority) {
-                                Priority.LOW -> Success
-                                Priority.MEDIUM -> Warning
-                                Priority.HIGH -> Color.Red
+                    if (viewModel.reminderCategory.value == Category.MEDICINE) {
+                        TopicText("Priority")
+                        LazyRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            contentPadding = PaddingValues(horizontal = 4.dp)
+                        ) {
+                            items(Priority.entries) { priority ->
+                                val selected = viewModel.reminderPriority.value == priority
+                                val priorityColor = when (priority) {
+                                    Priority.LOW -> Success
+                                    Priority.MEDIUM -> Warning
+                                    Priority.HIGH -> Color.Red
+                                }
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = { viewModel.onEvent(AddReminderEvent.ChangePriority(priority)) },
+                                    label = { Text(priority.name.lowercase().replaceFirstChar { it.uppercase() }) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = priorityColor,
+                                        selectedLabelColor = Color.White,
+                                        containerColor = cardColor,
+                                        labelColor = onSurface.copy(alpha = 0.6f)
+                                    ),
+                                    border = if (isDark) null else FilterChipDefaults.filterChipBorder(
+                                        enabled = true,
+                                        selected = selected,
+                                        borderColor = Color.Black.copy(alpha = 0.05f)
+                                    )
+                                )
                             }
-                            FilterChip(
-                                selected = selected,
-                                onClick = { viewModel.onEvent(AddReminderEvent.ChangePriority(priority)) },
-                                label = { Text(priority.name.lowercase().replaceFirstChar { it.uppercase() }) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = priorityColor,
-                                    selectedLabelColor = Color.White,
-                                    containerColor = DarkCard,
-                                    labelColor = DarkText.copy(alpha = 0.6f)
-                                ),
-                                border = null
-                            )
                         }
                     }
 
@@ -408,7 +479,12 @@ fun AddReminderScreen(
                                 .fillMaxWidth()
                                 .height(44.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(DarkCard)
+                                .background(cardColor)
+                                .border(
+                                    width = if (isDark) 0.dp else 1.dp,
+                                    color = if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.05f),
+                                    shape = RoundedCornerShape(12.dp)
+                                )
                                 .clickable { showExpiryDatePicker = true }
                                 .padding(horizontal = 12.dp),
                             contentAlignment = Alignment.CenterStart
@@ -420,7 +496,7 @@ fun AddReminderScreen(
                                     text = viewModel.expiryDate.value?.let { 
                                         SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date(it))
                                     } ?: "Set expiry date (Optional)",
-                                    color = if (viewModel.expiryDate.value != null) DarkText else DarkText.copy(alpha = 0.4f),
+                                    color = if (viewModel.expiryDate.value != null) onSurface else onSurface.copy(alpha = 0.4f),
                                     fontSize = 14.sp
                                 )
                                 if (viewModel.expiryDate.value != null) {
@@ -429,7 +505,7 @@ fun AddReminderScreen(
                                         onClick = { viewModel.onEvent(AddReminderEvent.ChangeExpiryDate(null)) },
                                         modifier = Modifier.size(24.dp)
                                     ) {
-                                        Icon(Icons.Default.Close, null, tint = DarkText.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
+                                        Icon(Icons.Default.Close, null, tint = onSurface.copy(alpha = 0.4f), modifier = Modifier.size(16.dp))
                                     }
                                 }
                             }
@@ -447,7 +523,12 @@ fun AddReminderScreen(
                                 modifier = Modifier
                                     .size(80.dp)
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(DarkCard)
+                                    .background(cardColor)
+                                    .border(
+                                        width = if (isDark) 0.dp else 1.dp,
+                                        color = if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.05f),
+                                        shape = RoundedCornerShape(12.dp)
+                                    )
                                     .clickable { showAttachmentDialog = true },
                                 contentAlignment = Alignment.Center
                             ) {
@@ -488,11 +569,11 @@ fun AddReminderScreen(
     if (showAttachmentDialog) {
         AlertDialog(
             onDismissRequest = { showAttachmentDialog = false },
-            title = { Text("Add Attachment", color = DarkText) },
+            title = { Text("Add Attachment", color = onSurface) },
             text = {
                 Column {
                     ListItem(
-                        headlineContent = { Text("Take Photo", color = DarkText) },
+                        headlineContent = { Text("Take Photo", color = onSurface) },
                         leadingContent = { Icon(Icons.Default.PhotoCamera, contentDescription = null, tint = Primary) },
                         modifier = Modifier.clickable {
                             showAttachmentDialog = false
@@ -507,7 +588,8 @@ fun AddReminderScreen(
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent)
                     )
                     ListItem(
-                        headlineContent = { Text("Upload File", color = DarkText) },
+                        headlineContent = { Text("Upload File", color = onSurface) },
+                        supportingContent = { Text("Photo, Video, Audio, or Document", fontSize = 11.sp) },
                         leadingContent = { Icon(Icons.Default.AttachFile, contentDescription = null, tint = Primary) },
                         modifier = Modifier.clickable {
                             showAttachmentDialog = false
@@ -522,7 +604,7 @@ fun AddReminderScreen(
                     Text("Cancel", color = Primary)
                 }
             },
-            containerColor = DarkCard
+            containerColor = cardColor
         )
     }
 
@@ -551,14 +633,14 @@ fun AddReminderScreen(
             dismissButton = {
                 TextButton(onClick = { showDatePicker = false }) { Text("Cancel", color = Primary) }
             },
-            colors = DatePickerDefaults.colors(containerColor = DarkCard)
+            colors = DatePickerDefaults.colors(containerColor = cardColor)
         ) {
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    containerColor = DarkCard,
-                    titleContentColor = DarkText,
-                    headlineContentColor = DarkText,
+                    containerColor = cardColor,
+                    titleContentColor = onSurface,
+                    headlineContentColor = onSurface,
                     selectedDayContainerColor = Primary,
                     selectedDayContentColor = Color.White,
                     todayContentColor = Primary,
@@ -595,22 +677,22 @@ fun AddReminderScreen(
                 TimePicker(
                     state = timePickerState,
                     colors = TimePickerDefaults.colors(
-                        clockDialColor = DarkBgEnd,
+                        clockDialColor = if (isDark) DarkBgEnd else Background,
                         clockDialSelectedContentColor = Color.White,
-                        clockDialUnselectedContentColor = DarkText,
+                        clockDialUnselectedContentColor = onSurface,
                         selectorColor = Primary,
                         periodSelectorSelectedContainerColor = Primary,
-                        periodSelectorUnselectedContainerColor = DarkCard,
+                        periodSelectorUnselectedContainerColor = cardColor,
                         periodSelectorSelectedContentColor = Color.White,
-                        periodSelectorUnselectedContentColor = DarkText,
+                        periodSelectorUnselectedContentColor = onSurface,
                         timeSelectorSelectedContainerColor = Primary,
-                        timeSelectorUnselectedContainerColor = DarkCard,
+                        timeSelectorUnselectedContainerColor = cardColor,
                         timeSelectorSelectedContentColor = Color.White,
-                        timeSelectorUnselectedContentColor = DarkText
+                        timeSelectorUnselectedContentColor = onSurface
                     )
                 )
             },
-            containerColor = DarkCard
+            containerColor = cardColor
         )
     }
 
@@ -629,14 +711,14 @@ fun AddReminderScreen(
             dismissButton = {
                 TextButton(onClick = { showExpiryDatePicker = false }) { Text("Cancel", color = Primary) }
             },
-            colors = DatePickerDefaults.colors(containerColor = DarkCard)
+            colors = DatePickerDefaults.colors(containerColor = cardColor)
         ) {
             DatePicker(
                 state = datePickerState,
                 colors = DatePickerDefaults.colors(
-                    containerColor = DarkCard,
-                    titleContentColor = DarkText,
-                    headlineContentColor = DarkText,
+                    containerColor = cardColor,
+                    titleContentColor = onSurface,
+                    headlineContentColor = onSurface,
                     selectedDayContainerColor = Primary,
                     selectedDayContentColor = Color.White,
                     todayContentColor = Primary,
@@ -651,7 +733,7 @@ fun AddReminderScreen(
 fun TopicText(text: String) {
     Text(
         text = text,
-        color = DarkText,
+        color = MaterialTheme.colorScheme.onSurface,
         fontSize = 13.sp,
         fontWeight = FontWeight.SemiBold,
         modifier = Modifier.padding(start = 4.dp, bottom = 4.dp)
@@ -669,24 +751,28 @@ fun EditField(
     minLines: Int = 1,
     trailingIcon: @Composable (() -> Unit)? = null
 ) {
+    val isDark = isSystemInDarkTheme()
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val cardColor = if (isDark) DarkCard else Color(0xFFF1F3F4)
+
     TextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
             .heightIn(min = 44.dp),
-        placeholder = { Text(placeholder, color = DarkText.copy(alpha = 0.4f), fontSize = 14.sp) },
+        placeholder = { Text(placeholder, color = onSurface.copy(alpha = 0.4f), fontSize = 14.sp) },
         readOnly = readOnly,
         singleLine = singleLine,
         minLines = minLines,
         trailingIcon = trailingIcon,
-        textStyle = TextStyle(fontSize = 14.sp, color = DarkText),
+        textStyle = TextStyle(fontSize = 14.sp, color = onSurface),
         colors = TextFieldDefaults.colors(
-            focusedTextColor = DarkText,
-            unfocusedTextColor = DarkText,
-            focusedContainerColor = DarkCard,
-            unfocusedContainerColor = DarkCard,
-            disabledContainerColor = DarkCard,
+            focusedTextColor = onSurface,
+            unfocusedTextColor = onSurface,
+            focusedContainerColor = cardColor,
+            unfocusedContainerColor = cardColor,
+            disabledContainerColor = cardColor,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent,

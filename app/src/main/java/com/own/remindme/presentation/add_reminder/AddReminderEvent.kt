@@ -17,4 +17,5 @@ sealed class AddReminderEvent {
     data class RemoveAttachment(val uri: String) : AddReminderEvent()
     object SaveReminder : AddReminderEvent()
     object DeleteReminder : AddReminderEvent()
+    object ToggleAiListening : AddReminderEvent()
 }

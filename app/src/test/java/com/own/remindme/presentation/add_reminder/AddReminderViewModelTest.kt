@@ -1,11 +1,15 @@
 package com.own.remindme.presentation.add_reminder
 
 import androidx.lifecycle.SavedStateHandle
+import com.own.remindme.data.remote.ai.GroqService
 import com.own.remindme.domain.model.Category
 import com.own.remindme.domain.usecase.*
+import com.own.remindme.utils.voice.SpeechRecognizerManager
+import com.own.remindme.utils.voice.TTSManager
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -22,6 +26,9 @@ class AddReminderViewModelTest {
     private lateinit var updateReminderUseCase: UpdateReminderUseCase
     private lateinit var deleteReminderUseCase: DeleteReminderUseCase
     private lateinit var getAllRemindersUseCase: GetAllRemindersUseCase
+    private lateinit var groqService: GroqService
+    private lateinit var ttsManager: TTSManager
+    private lateinit var speechRecognizerManager: SpeechRecognizerManager
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
@@ -34,6 +41,11 @@ class AddReminderViewModelTest {
         updateReminderUseCase = mockk()
         deleteReminderUseCase = mockk()
         getAllRemindersUseCase = mockk()
+        groqService = mockk()
+        ttsManager = mockk()
+        speechRecognizerManager = mockk()
+
+        every { speechRecognizerManager.isListening } returns MutableStateFlow(false)
 
         reminderUseCases = ReminderUseCases(
             getAllReminders = getAllRemindersUseCase,
@@ -51,7 +63,13 @@ class AddReminderViewModelTest {
 
     @Test
     fun `EnteredTitle event updates title state`() {
-        viewModel = AddReminderViewModel(reminderUseCases, SavedStateHandle())
+        viewModel = AddReminderViewModel(
+            reminderUseCases,
+            groqService,
+            ttsManager,
+            speechRecognizerManager,
+            SavedStateHandle()
+        )
         
         viewModel.onEvent(AddReminderEvent.EnteredTitle("Buy Milk"))
         
@@ -60,7 +78,13 @@ class AddReminderViewModelTest {
 
     @Test
     fun `ChangeCategory event updates category state`() {
-        viewModel = AddReminderViewModel(reminderUseCases, SavedStateHandle())
+        viewModel = AddReminderViewModel(
+            reminderUseCases,
+            groqService,
+            ttsManager,
+            speechRecognizerManager,
+            SavedStateHandle()
+        )
         
         viewModel.onEvent(AddReminderEvent.ChangeCategory(Category.SHOPPING))
         
@@ -68,12 +92,18 @@ class AddReminderViewModelTest {
     }
 
     @Test
-    fun `ChangeImageUri event updates imageUri state`() {
-        viewModel = AddReminderViewModel(reminderUseCases, SavedStateHandle())
+    fun `AddAttachment event updates attachmentUris state`() {
+        viewModel = AddReminderViewModel(
+            reminderUseCases,
+            groqService,
+            ttsManager,
+            speechRecognizerManager,
+            SavedStateHandle()
+        )
         
         val testUri = "content://media/external/images/media/1"
-        viewModel.onEvent(AddReminderEvent.ChangeImageUri(testUri))
+        viewModel.onEvent(AddReminderEvent.AddAttachment(testUri))
         
-        assertEquals(testUri, viewModel.imageUri.value)
+        assertEquals(true, viewModel.attachmentUris.value.contains(testUri))
     }
 }

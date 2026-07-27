@@ -16,6 +16,8 @@ import androidx.compose.ui.unit.dp
 fun EmptyState(
     modifier: Modifier = Modifier
 ) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -25,14 +27,14 @@ fun EmptyState(
             imageVector = Icons.Default.EventBusy,
             contentDescription = "No reminders",
             modifier = Modifier.size(56.dp),
-            tint = Color(0xFFFFFFFF)
+            tint = onSurface.copy(alpha = 0.4f)
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = "Nothing to remind today",
-            color = Color.White,
+            color = onSurface,
             style = MaterialTheme.typography.titleSmall
         )
 
@@ -40,7 +42,7 @@ fun EmptyState(
 
         Text(
             text = "Tap the + button to create a new reminder.",
-            color = Color.White.copy(alpha = 0.6f),
+            color = onSurface.copy(alpha = 0.6f),
             style = MaterialTheme.typography.bodySmall
         )
     }

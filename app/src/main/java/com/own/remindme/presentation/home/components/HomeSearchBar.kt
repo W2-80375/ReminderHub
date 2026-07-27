@@ -9,23 +9,26 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.own.remindme.ui.theme.AppIcon
-import com.own.remindme.ui.theme.AppIcons
+import com.own.remindme.ui.theme.*
 
 @Composable
 fun HomeSearchBar(
     value: String,
     onValueChange: (String) -> Unit
 ) {
+    val isDark = LocalDarkTheme.current
+    val textColor = if (isDark) Color.White else TextPrimary
+    val containerColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
+
     TextField(
         modifier = Modifier.fillMaxWidth().height(48.dp),
         value = value,
         onValueChange = onValueChange,
-        textStyle = TextStyle(color = Color.White, fontSize = 14.sp),
+        textStyle = TextStyle(color = textColor, fontSize = 14.sp),
         placeholder = {
             Text(
                 "Search reminders",
-                color = Color.White.copy(alpha = 0.6f),
+                color = textColor.copy(alpha = 0.6f),
                 fontSize = 14.sp
             )
         },
@@ -33,17 +36,17 @@ fun HomeSearchBar(
             AppIcon(
                 icon = AppIcons.Search,
                 contentDescription = null,
-                tint = Color.White,
+                tint = textColor,
                 modifier = Modifier.size(20.dp)
             )
         },
         singleLine = true,
         colors = TextFieldDefaults.colors(
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White,
-            cursorColor = Color.White,
-            focusedContainerColor = Color.White.copy(alpha = 0.1f),
-            unfocusedContainerColor = Color.White.copy(alpha = 0.1f),
+            focusedTextColor = textColor,
+            unfocusedTextColor = textColor,
+            cursorColor = textColor,
+            focusedContainerColor = containerColor,
+            unfocusedContainerColor = containerColor,
             focusedIndicatorColor = Color.Transparent,
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent

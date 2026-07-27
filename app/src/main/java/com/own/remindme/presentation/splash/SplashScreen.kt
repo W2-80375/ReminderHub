@@ -48,10 +48,17 @@ fun SplashScreen(
         navigate()
     }
 
+    val isDark = LocalDarkTheme.current
+    val backgroundColors = if (isDark) {
+        listOf(DarkBgStart, DarkBgEnd)
+    } else {
+        listOf(Color.White, SurfaceVariant)
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd))),
+            .background(Brush.verticalGradient(colors = backgroundColors)),
         contentAlignment = Alignment.Center
     ) {
         Column(
@@ -63,13 +70,13 @@ fun SplashScreen(
             Box(
                 modifier = Modifier
                     .size(100.dp)
-                    .background(Primary.copy(alpha = 0.1f), CircleShape),
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.NotificationsActive,
                     contentDescription = null,
-                    tint = Primary,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(60.dp)
                 )
             }
@@ -78,7 +85,7 @@ fun SplashScreen(
             
             Text(
                 text = "ReminderHub",
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 32.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 1.sp
@@ -86,7 +93,7 @@ fun SplashScreen(
             
             Text(
                 text = "Never miss what matters",
-                color = Color.White.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Normal,
                 modifier = Modifier.padding(top = 8.dp)

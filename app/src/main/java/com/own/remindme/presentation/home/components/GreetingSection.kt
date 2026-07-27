@@ -14,10 +14,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.own.remindme.ui.theme.AppIcon
-import com.own.remindme.ui.theme.AppIcons
-import com.own.remindme.ui.theme.DarkText
-import com.own.remindme.ui.theme.Dimens
+import com.own.remindme.ui.theme.*
 
 @Composable
 fun GreetingSection(
@@ -26,6 +23,9 @@ fun GreetingSection(
     onNotificationClick: () -> Unit = {},
     onSettingsClick: () -> Unit = {}
 ) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val isDark = LocalDarkTheme.current
+    
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -38,7 +38,7 @@ fun GreetingSection(
             Text(
                 text = greeting,
                 style = MaterialTheme.typography.titleLarge,
-                color = DarkText,
+                color = onSurface,
                 fontWeight = FontWeight.Bold
             )
 
@@ -49,7 +49,7 @@ fun GreetingSection(
             Text(
                 text = "Manage all your reminders effortlessly",
                 style = MaterialTheme.typography.bodySmall,
-                color = DarkText.copy(alpha = 0.6f)
+                color = onSurface.copy(alpha = 0.6f)
             )
         }
 
@@ -59,8 +59,9 @@ fun GreetingSection(
                     AppIcon(
                         icon = AppIcons.Notifications,
                         contentDescription = "Notifications",
-                        tint = DarkText
+                        tint = if (!isDark) DarkBackground else onSurface
                     )
+                    
                     if (unreadCount > 0) {
                         Box(
                             modifier = Modifier
@@ -84,7 +85,7 @@ fun GreetingSection(
                 AppIcon(
                     icon = AppIcons.Settings,
                     contentDescription = "Settings",
-                    tint = DarkText
+                    tint = if (!isDark) DarkBackground else onSurface
                 )
             }
         }

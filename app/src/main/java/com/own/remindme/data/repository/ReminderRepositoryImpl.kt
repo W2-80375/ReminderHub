@@ -4,8 +4,8 @@ import android.content.Context
 import com.own.remindme.data.local.ReminderDao
 import com.own.remindme.data.mapper.toDomain
 import com.own.remindme.data.mapper.toEntity
+import com.own.remindme.domain.model.Category
 import com.own.remindme.domain.model.Reminder
-import com.own.remindme.domain.model.label
 import com.own.remindme.domain.repository.ReminderRepository
 import com.own.remindme.utils.notifications.NotificationScheduler
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -33,77 +33,60 @@ class ReminderRepositoryImpl @Inject constructor(
 
     override suspend fun insert(reminder: Reminder): Long {
         val id = dao.insert(reminder.toEntity())
-        
-        // Schedule notifications for all reminder times
-        reminder.reminderTimes.forEachIndexed { index, time ->
-            NotificationScheduler.scheduleNotification(
-                context = context,
-                id = id.toInt() + (index * 1000), // Unique ID for each time slot
-                title = "Reminder: ${reminder.title}",
-                message = reminder.description,
-                timeInMillis = time,
-                frequency = reminder.repeatType.label,
-                priority = reminder.priority,
-                category = reminder.category
-            )
-        }
-
-        // Schedule notification for expiry date if it exists
-        reminder.expiryDate?.let { expiry ->
-            NotificationScheduler.scheduleNotification(
-                context = context,
-                id = id.toInt() + 1000000, // Use a different ID for expiry
-                title = "Reminder Expired: ${reminder.title}",
-                message = "The reminder for ${reminder.title} has reached its expiry date.",
-                timeInMillis = expiry,
-                frequency = "None"
-            )
-        }
-
+        scheduleNotificationsForReminder(reminder.copy(id = id))
         return id
     }
 
     override suspend fun update(reminder: Reminder) {
         dao.update(reminder.toEntity())
-        
-        // First cancel existing notifications for all potential slots (up to 10)
-        for (i in 0 until 10) {
-            NotificationScheduler.cancelNotification(context, reminder.id.toInt() + (i * 1000))
-        }
+        NotificationScheduler.cancelAllReminderNotifications(context, reminder.id.toInt())
+        scheduleNotificationsForReminder(reminder)
+    }
 
-        // Reschedule notifications for all current reminder times
+    private fun scheduleNotificationsForReminder(reminder: Reminder) {
         reminder.reminderTimes.forEachIndexed { index, time ->
+            // Use (reminderId * 10 + index) for unique IDs per time slot
+            val notificationId = reminder.id.toInt() * 10 + index
+            
             NotificationScheduler.scheduleNotification(
                 context = context,
-                id = reminder.id.toInt() + (index * 1000),
+                id = notificationId,
                 title = "Reminder: ${reminder.title}",
                 message = reminder.description,
                 timeInMillis = time,
-                frequency = reminder.repeatType.label,
+                repeatType = reminder.repeatType,
                 priority = reminder.priority,
-                category = reminder.category
+                category = reminder.category,
+                originalReminderId = reminder.id
             )
         }
 
-        // Reschedule notification for expiry date if it exists
+        // Handle Expiry
         reminder.expiryDate?.let { expiry ->
-            NotificationScheduler.scheduleNotification(
-                context = context,
-                id = reminder.id.toInt() + 1000000,
-                title = "Reminder Expired: ${reminder.title}",
-                message = "The reminder for ${reminder.title} has reached its expiry date.",
-                timeInMillis = expiry,
-                frequency = "None"
-            )
+            if (reminder.category == Category.MEDICINE) {
+                NotificationScheduler.scheduleExpiryAlerts(
+                    context = context,
+                    reminderId = reminder.id.toInt(),
+                    title = reminder.title,
+                    expiryDate = expiry
+                )
+            } else {
+                // Use a dedicated ID range for non-medicine expiry: reminderId * 10 + 9
+                val expiryNotificationId = reminder.id.toInt() * 10 + 9
+                NotificationScheduler.scheduleNotification(
+                    context = context,
+                    id = expiryNotificationId,
+                    title = "Expiry Reminder: ${reminder.title}",
+                    message = "The reminder for ${reminder.title} has reached its expiry date.",
+                    timeInMillis = expiry,
+                    originalReminderId = reminder.id
+                )
+            }
         }
     }
 
     override suspend fun delete(reminder: Reminder) {
         dao.delete(reminder.toEntity())
-        // Cancel all potential slots (up to 10)
-        for (i in 0 until 10) {
-            NotificationScheduler.cancelNotification(context, reminder.id.toInt() + (i * 1000))
-        }
-        NotificationScheduler.cancelNotification(context, reminder.id.toInt() + 1000000)
+        NotificationScheduler.cancelAllReminderNotifications(context, reminder.id.toInt())
     }
 }

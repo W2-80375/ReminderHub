@@ -248,37 +248,19 @@ class HomeViewModel @Inject constructor(
         val dateFormat = java.text.SimpleDateFormat("dd MMM", java.util.Locale.getDefault())
         val expiryFormat = java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.getDefault())
 
-        val todayStart = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-        val todayEnd = todayStart + 24 * 60 * 60 * 1000
-
         val mainTime = reminderTimes.minOrNull() ?: 0L
+        val timeString = reminderTimes.sorted().joinToString(", ") { timeFormat.format(java.util.Date(it)) }
 
-        val displayDate = when {
-            reminderTimes.any { it in todayStart until todayEnd } -> {
-                val todayTimes = reminderTimes.filter { it in todayStart until todayEnd }.sorted()
-                todayTimes.joinToString(", ") { timeFormat.format(java.util.Date(it)) }
-            }
-            mainTime < todayStart -> "Overdue: ${dateFormat.format(java.util.Date(mainTime))}"
-            else -> dateFormat.format(java.util.Date(mainTime)) + ", " + timeFormat.format(java.util.Date(mainTime))
-        }
+        val startDateStr = dateFormat.format(java.util.Date(mainTime))
 
         return ReminderUiModel(
-
             id = id.toInt(),
-
             title = title,
-
+            description = description,
             category = category.name,
-
-            date = displayDate,
-
+            date = timeString,
             repeat = repeatType.label,
-
+            startDate = "Started on: $startDateStr",
             color = when (category) {
 
                 DomainCategory.MEDICINE -> MedicineColor
@@ -312,6 +294,8 @@ class HomeViewModel @Inject constructor(
             },
 
             expiryDate = expiryDate?.let { expiryFormat.format(java.util.Date(it)) },
+
+            isExpired = expiryDate?.let { it < System.currentTimeMillis() } ?: false,
 
             isMedicine = category == DomainCategory.MEDICINE,
 

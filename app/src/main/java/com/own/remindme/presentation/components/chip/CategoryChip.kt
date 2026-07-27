@@ -15,9 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.own.remindme.ui.theme.DarkCard
-import com.own.remindme.ui.theme.DarkText
-import com.own.remindme.ui.theme.Primary
+import com.own.remindme.ui.theme.*
 
 @Composable
 fun CategoryChip(
@@ -26,11 +24,15 @@ fun CategoryChip(
     selected: Boolean,
     onClick: () -> Unit
 ) {
+    val isDark = LocalDarkTheme.current
+    val cardColor = if (isDark) DarkCard else Color(0xFFEEEEEE)
+    val textColor = if (isDark) DarkText else TextPrimary
+
     val gradient = when (color) {
-        com.own.remindme.ui.theme.MedicineColor -> com.own.remindme.ui.theme.GradientAmber
-        com.own.remindme.ui.theme.VehicleColor -> com.own.remindme.ui.theme.GradientBlue
-        com.own.remindme.ui.theme.BillsColor -> com.own.remindme.ui.theme.GradientRed
-        com.own.remindme.ui.theme.DocumentColor -> com.own.remindme.ui.theme.GradientPurple
+        MedicineColor -> GradientAmber
+        VehicleColor -> GradientBlue
+        BillsColor -> GradientRed
+        DocumentColor -> GradientPurple
         else -> listOf(Primary, Primary.copy(alpha = 0.8f))
     }
 
@@ -43,8 +45,12 @@ fun CategoryChip(
                     Modifier.background(Brush.linearGradient(colors = gradient))
                 } else {
                     Modifier
-                        .background(DarkCard)
-                        .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+                        .background(cardColor)
+                        .border(
+                            1.dp, 
+                            if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f), 
+                            RoundedCornerShape(16.dp)
+                        )
                 }
             )
             .clickable { onClick() }
@@ -52,7 +58,7 @@ fun CategoryChip(
     ) {
         Text(
             text = title,
-            color = if (selected) Color.White else DarkText.copy(alpha = 0.7f),
+            color = if (selected) Color.White else textColor.copy(alpha = 0.7f),
             fontSize = 14.sp,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )

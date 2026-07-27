@@ -2,6 +2,9 @@ package com.own.remindme.data.repository
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.*
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import com.own.remindme.domain.model.AppTheme
 import com.own.remindme.domain.repository.UserPreferences
 import com.own.remindme.domain.repository.UserPreferencesRepository
 import kotlinx.coroutines.flow.Flow
@@ -14,12 +17,15 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     private val dataStore: DataStore<Preferences>
 ) : UserPreferencesRepository {
 
+    private val gson = Gson()
+    private val mapType = object : TypeToken<Map<String, String>>() {}.type
+
     private object PreferencesKeys {
         val USER_NAME = stringPreferencesKey("user_name")
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val EMERGENCY_CONTACT = stringPreferencesKey("emergency_contact")
-        val MEDICINE_SOUND = stringPreferencesKey("medicine_sound")
-        val OTHER_SOUND = stringPreferencesKey("other_sound")
+        val CATEGORY_SOUNDS = stringPreferencesKey("category_sounds")
+        val APP_THEME = stringPreferencesKey("app_theme")
     }
 
     override val userPreferencesFlow: Flow<UserPreferences> = dataStore.data
@@ -31,12 +37,26 @@ class UserPreferencesRepositoryImpl @Inject constructor(
             }
         }
         .map { preferences ->
+            val themeName = preferences[PreferencesKeys.APP_THEME] ?: AppTheme.SYSTEM.name
+            val theme = try {
+                AppTheme.valueOf(themeName)
+            } catch (e: Exception) {
+                AppTheme.SYSTEM
+            }
+
+            val soundsJson = preferences[PreferencesKeys.CATEGORY_SOUNDS] ?: "{}"
+            val soundsMap: Map<String, String> = try {
+                gson.fromJson(soundsJson, mapType)
+            } catch (e: Exception) {
+                emptyMap()
+            }
+
             UserPreferences(
                 userName = preferences[PreferencesKeys.USER_NAME] ?: "",
                 isNotificationsEnabled = preferences[PreferencesKeys.NOTIFICATIONS_ENABLED] ?: true,
                 emergencyContact = preferences[PreferencesKeys.EMERGENCY_CONTACT] ?: "",
-                medicineSoundPath = preferences[PreferencesKeys.MEDICINE_SOUND],
-                otherSoundPath = preferences[PreferencesKeys.OTHER_SOUND]
+                categorySounds = soundsMap,
+                appTheme = theme
             )
         }
 
@@ -58,17 +78,28 @@ class UserPreferencesRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateMedicineSound(path: String?) {
+    override suspend fun updateCategorySound(category: String, path: String?) {
         dataStore.edit { preferences ->
-            if (path == null) preferences.remove(PreferencesKeys.MEDICINE_SOUND)
-            else preferences[PreferencesKeys.MEDICINE_SOUND] = path
+            val currentJson = preferences[PreferencesKeys.CATEGORY_SOUNDS] ?: "{}"
+            val currentMap: MutableMap<String, String> = try {
+                gson.fromJson(currentJson, mapType)
+            } catch (e: Exception) {
+                mutableMapOf()
+            }
+
+            if (path == null) {
+                currentMap.remove(category)
+            } else {
+                currentMap[category] = path
+            }
+
+            preferences[PreferencesKeys.CATEGORY_SOUNDS] = gson.toJson(currentMap)
         }
     }
 
-    override suspend fun updateOtherSound(path: String?) {
+    override suspend fun updateAppTheme(theme: AppTheme) {
         dataStore.edit { preferences ->
-            if (path == null) preferences.remove(PreferencesKeys.OTHER_SOUND)
-            else preferences[PreferencesKeys.OTHER_SOUND] = path
+            preferences[PreferencesKeys.APP_THEME] = theme.name
         }
     }
 }

@@ -40,4 +40,10 @@ class NotificationsViewModel @Inject constructor(
             notificationRepository.deleteNotification(notification)
         }
     }
+
+    fun deleteAllNotifications() {
+        viewModelScope.launch {
+            notificationRepository.deleteAllNotifications()
+        }
+    }
 }

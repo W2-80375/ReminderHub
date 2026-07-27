@@ -2,6 +2,7 @@ package com.own.remindme.presentation.home
 
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.compose.foundation.lazy.LazyColumn
@@ -66,57 +67,54 @@ fun HomeScreen(
     ) { padding ->
 
         PullToRefreshBox(
-
             state = pullRefreshState,
-
             isRefreshing = state.isRefreshing,
-
             onRefresh = {
-
                 viewModel.refresh()
-
             }
-
         ) {
-
+            val isDark = LocalDarkTheme.current
+            val onSurface = MaterialTheme.colorScheme.onSurface
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(DarkBgEnd)
+                    .background(if (isDark) DarkBgEnd else Color.White)
             ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(MeshColor1.copy(alpha = 0.6f), Color.Transparent),
-                                center = Offset(0f, 0f),
-                                radius = 800f
+                if (isDark) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(MeshColor1.copy(alpha = 0.6f), Color.Transparent),
+                                    center = Offset(0f, 0f),
+                                    radius = 800f
+                                )
                             )
-                        )
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(MeshColor2.copy(alpha = 0.4f), Color.Transparent),
-                                center = Offset(1000f, 500f),
-                                radius = 1000f
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(MeshColor2.copy(alpha = 0.4f), Color.Transparent),
+                                    center = Offset(1000f, 500f),
+                                    radius = 1000f
+                                )
                             )
-                        )
-                )
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(MeshColor3.copy(alpha = 0.5f), Color.Transparent),
-                                center = Offset(0f, 1500f),
-                                radius = 1200f
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.radialGradient(
+                                    colors = listOf(MeshColor3.copy(alpha = 0.5f), Color.Transparent),
+                                    center = Offset(0f, 1500f),
+                                    radius = 1200f
+                                )
                             )
-                        )
-                )
+                    )
+                }
             }
 
             Column(
@@ -138,7 +136,7 @@ fun HomeScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -191,7 +189,8 @@ fun HomeScreen(
                     if (state.todayReminders.isNotEmpty()) {
                         item {
                             SectionHeader(
-                                title = "Today's Reminders"
+                                title = "Today's Reminders",
+                                titleColor = onSurface
                             )
                         }
 
@@ -208,13 +207,15 @@ fun HomeScreen(
                                 },
                                 onTakenClick = {
                                     viewModel.toggleTaken(it)
-                                }
+                                },
+                                showStatusBadge = true
                             )
                         }
                     } else if (state.upcomingReminders.isEmpty()) {
                         item {
                             SectionHeader(
-                                title = "Today's Reminders"
+                                title = "Today's Reminders",
+                                titleColor = onSurface
                             )
                         }
                         item {
@@ -225,7 +226,8 @@ fun HomeScreen(
                     if (state.upcomingReminders.isNotEmpty()) {
                         item {
                             SectionHeader(
-                                title = "Upcoming"
+                                title = "Upcoming",
+                                titleColor = onSurface
                             )
                         }
 

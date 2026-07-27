@@ -2,7 +2,9 @@ package com.own.remindme.presentation.detail
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -28,7 +30,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -44,6 +45,7 @@ import com.own.remindme.ui.theme.*
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,16 +57,19 @@ fun ReminderDetailScreen(
 ) {
     val context = LocalContext.current
     val reminder = viewModel.reminder.value
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val isDark = isSystemInDarkTheme()
+    val cardColor = if (isDark) DarkCard else Color.White
 
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text(text = "Reminder Details", color = DarkText) },
+                title = { Text(text = "Reminder Details", color = onSurface) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    navigationIconContentColor = DarkText,
-                    titleContentColor = DarkText
+                    navigationIconContentColor = onSurface,
+                    titleContentColor = onSurface
                 ),
                 navigationIcon = {
                     IconButton(onClick = { navController.navigateUp() }) {
@@ -80,7 +85,12 @@ fun ReminderDetailScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd)))
+                .background(
+                    if (isDark) 
+                        Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd))
+                    else
+                        Brush.verticalGradient(colors = listOf(Color.White, Color.White))
+                )
         )
 
         reminder?.let { rem ->
@@ -99,7 +109,8 @@ fun ReminderDetailScreen(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(24.dp),
-                    colors = CardDefaults.cardColors(containerColor = DarkCard)
+                    colors = CardDefaults.cardColors(containerColor = cardColor),
+                    border = if (isDark) null else BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f))
                 ) {
                     Column(
                         modifier = Modifier.padding(24.dp),
@@ -162,7 +173,7 @@ fun ReminderDetailScreen(
                         Text(
                             text = rem.title,
                             style = MaterialTheme.typography.headlineSmall,
-                            color = DarkText,
+                            color = onSurface,
                             fontWeight = FontWeight.Bold
                         )
                     }
@@ -171,7 +182,15 @@ fun ReminderDetailScreen(
                 DetailItem(
                     icon = Icons.Default.Description,
                     label = "Description",
-                    value = rem.description.ifBlank { "No description provided" }
+                    value = rem.description.ifBlank { "No description provided" },
+                    cardColor = cardColor
+                )
+
+                DetailItem(
+                    icon = Icons.Default.CalendarMonth,
+                    label = "Start Date",
+                    value = dateFormat.format(Date(rem.reminderTimes.minOrNull() ?: 0L)),
+                    cardColor = cardColor
                 )
 
                 if (rem.imageUris.isNotEmpty()) {
@@ -179,7 +198,7 @@ fun ReminderDetailScreen(
                         Text(
                             text = "Attachments",
                             style = MaterialTheme.typography.labelMedium,
-                            color = DarkText.copy(alpha = 0.5f),
+                            color = onSurface.copy(alpha = 0.5f),
                             modifier = Modifier.padding(start = 4.dp)
                         )
                         LazyRow(
@@ -195,6 +214,11 @@ fun ReminderDetailScreen(
                                 Card(
                                     modifier = Modifier
                                         .size(if (isImage) 150.dp else 100.dp)
+                                        .border(
+                                            width = if (isDark) 0.dp else 1.dp,
+                                            color = if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.05f),
+                                            shape = RoundedCornerShape(16.dp)
+                                        )
                                         .clickable {
                                             try {
                                                 val intent = Intent(Intent.ACTION_VIEW).apply {
@@ -207,7 +231,7 @@ fun ReminderDetailScreen(
                                             }
                                         },
                                     shape = RoundedCornerShape(16.dp),
-                                    colors = CardDefaults.cardColors(containerColor = DarkCard)
+                                    colors = CardDefaults.cardColors(containerColor = cardColor)
                                 ) {
                                     if (isImage) {
                                         Image(
@@ -242,7 +266,7 @@ fun ReminderDetailScreen(
                                             } ?: "File"
                                             Text(
                                                 fileName,
-                                                color = DarkText,
+                                                color = onSurface,
                                                 fontSize = 10.sp,
                                                 maxLines = 1,
                                                 fontWeight = FontWeight.Medium
@@ -260,7 +284,8 @@ fun ReminderDetailScreen(
                         DetailItem(
                             icon = Icons.Default.Schedule,
                             label = if (rem.reminderTimes.size > 1) "Times" else "Time",
-                            value = rem.reminderTimes.sorted().joinToString(", ") { timeFormat.format(Date(it)) }
+                            value = rem.reminderTimes.sorted().joinToString(", ") { timeFormat.format(Date(it)) },
+                            cardColor = cardColor
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
@@ -268,7 +293,8 @@ fun ReminderDetailScreen(
                         DetailItem(
                             icon = Icons.Default.Repeat,
                             label = "Repeat",
-                            value = rem.repeatType.label
+                            value = rem.repeatType.label,
+                            cardColor = cardColor
                         )
                     }
                 }
@@ -278,24 +304,31 @@ fun ReminderDetailScreen(
                         DetailItem(
                             icon = Icons.Default.Category,
                             label = "Category",
-                            value = rem.category.name
+                            value = rem.category.name,
+                            cardColor = cardColor
                         )
                     }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Box(modifier = Modifier.weight(1f)) {
-                        DetailItem(
-                            icon = Icons.Default.PriorityHigh,
-                            label = "Priority",
-                            value = rem.priority.name
-                        )
+                    if (rem.category == Category.MEDICINE) {
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Box(modifier = Modifier.weight(1f)) {
+                            DetailItem(
+                                icon = Icons.Default.PriorityHigh,
+                                label = "Priority",
+                                value = rem.priority.name,
+                                cardColor = cardColor
+                            )
+                        }
                     }
                 }
 
                 rem.expiryDate?.let {
+                    val isExpired = it < System.currentTimeMillis()
                     DetailItem(
                         icon = Icons.Default.CalendarMonth,
-                        label = "Expiry Date",
-                        value = dateFormat.format(Date(it))
+                        label = if (isExpired) "Expired On" else "Expiry Date",
+                        value = dateFormat.format(Date(it)),
+                        cardColor = cardColor,
+                        valueColor = if (isExpired) Color.Red else onSurface
                     )
                 }
             }
@@ -312,12 +345,18 @@ fun ReminderDetailScreen(
 fun DetailItem(
     icon: ImageVector,
     label: String,
-    value: String
+    value: String,
+    cardColor: Color = DarkCard,
+    valueColor: Color? = null
 ) {
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val isDark = isSystemInDarkTheme()
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkCard)
+        colors = CardDefaults.cardColors(containerColor = cardColor),
+        border = if (isDark) null else BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
@@ -334,12 +373,12 @@ fun DetailItem(
                 Text(
                     text = label,
                     style = MaterialTheme.typography.labelMedium,
-                    color = DarkText.copy(alpha = 0.5f)
+                    color = onSurface.copy(alpha = 0.5f)
                 )
                 Text(
                     text = value,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = DarkText,
+                    color = valueColor ?: onSurface,
                     fontWeight = FontWeight.Medium
                 )
             }

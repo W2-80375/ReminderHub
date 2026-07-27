@@ -57,7 +57,7 @@ val SecondaryContainer = Color(0xFFD7FFF4)
    Background
 --------------------------------*/
 
-val Background = Color(0xFFF8F9FC)
+val Background = Color.White
 val Surface = Color.White
 val SurfaceVariant = Color(0xFFF2F3F7)
 
@@ -65,9 +65,9 @@ val SurfaceVariant = Color(0xFFF2F3F7)
    Text
 --------------------------------*/
 
-val TextPrimary = Color(0xFF1A1C1E)
-val TextSecondary = Color(0xFF666666)
-val TextHint = Color(0xFF9AA0A6)
+val TextPrimary = Color.Black
+val TextSecondary = Color(0xFF444444)
+val TextHint = Color(0xFF888888)
 
 /* ------------------------------
    Status

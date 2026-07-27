@@ -4,6 +4,7 @@ package com.own.remindme.presentation.home.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -24,11 +25,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.own.remindme.ui.theme.AppIcon
-import com.own.remindme.ui.theme.AppIcons
-import com.own.remindme.ui.theme.DarkCard
-import com.own.remindme.ui.theme.DarkText
-import com.own.remindme.ui.theme.Primary
+import com.own.remindme.ui.theme.*
 
 @Composable
 fun ReminderItem(
@@ -36,9 +33,15 @@ fun ReminderItem(
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     onDeleteClick: () -> Unit,
-    onTakenClick: () -> Unit = {}
+    onTakenClick: () -> Unit = {},
+    showStatusBadge: Boolean = false
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val isDark = LocalDarkTheme.current
+    
+    val cardColor = if (isDark) DarkCard else Color.White
+    val textColor = if (isDark) DarkText else TextPrimary
+    val subTextColor = if (isDark) DarkText.copy(alpha = 0.6f) else TextSecondary
 
     val gradient = when (reminder.color) {
         com.own.remindme.ui.theme.MedicineColor -> com.own.remindme.ui.theme.GradientAmber
@@ -58,17 +61,20 @@ fun ReminderItem(
                 cameraDistance = 16f * density
             }
             .clip(RoundedCornerShape(16.dp))
-            .background(DarkCard)
+            .background(cardColor)
             .border(
                 width = 0.8.dp,
                 brush = Brush.linearGradient(
-                    colors = listOf(Color.White.copy(alpha = 0.12f), Color.Transparent)
+                    colors = if (isDark) 
+                        listOf(Color.White.copy(alpha = 0.12f), Color.Transparent)
+                    else
+                        listOf(Color.Black.copy(alpha = 0.05f), Color.Transparent)
                 ),
                 shape = RoundedCornerShape(16.dp)
             )
     ) {
         // Taken/Pending Badge
-        if (reminder.isMedicine) {
+        if (reminder.isMedicine && showStatusBadge) {
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -121,8 +127,16 @@ fun ReminderItem(
                 Text(
                     text = reminder.title,
                     style = MaterialTheme.typography.titleSmall,
-                    color = DarkText,
+                    color = textColor,
                     fontWeight = FontWeight.SemiBold
+                )
+
+                Text(
+                    text = reminder.startDate,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = subTextColor,
+                    fontSize = 10.sp,
+                    maxLines = 1
                 )
 
                 Spacer(modifier = Modifier.height(2.dp))
@@ -131,35 +145,31 @@ fun ReminderItem(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = reminder.date,
-                        color = DarkText.copy(alpha = 0.5f),
+                        text = "${reminder.date}, ${reminder.repeat}",
+                        color = subTextColor.copy(alpha = 0.8f),
                         fontSize = 11.sp
-                    )
-                    
-                    Spacer(modifier = Modifier.width(6.dp))
-                    
-                    Box(modifier = Modifier.size(2.dp).clip(CircleShape).background(DarkText.copy(alpha = 0.3f)))
-                    
-                    Spacer(modifier = Modifier.width(6.dp))
-
-                    Text(
-                        text = reminder.repeat,
-                        color = gradient.first(),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
                     )
                 }
 
-                reminder.expiryDate?.let {
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Box(modifier = Modifier.size(2.dp).clip(CircleShape).background(DarkText.copy(alpha = 0.3f)))
-                    Spacer(modifier = Modifier.width(6.dp))
+                if (reminder.isExpired) {
                     Text(
-                        text = "Exp: $it",
-                        color = com.own.remindme.ui.theme.MedicineColor,
+                        text = "Expired",
+                        color = Color.Red,
                         fontSize = 11.sp,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Bold
                     )
+                } else {
+                    reminder.expiryDate?.let {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(modifier = Modifier.size(2.dp).clip(CircleShape).background(subTextColor.copy(alpha = 0.3f)))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = "Exp: $it",
+                            color = com.own.remindme.ui.theme.MedicineColor,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
             }
 
@@ -178,19 +188,19 @@ fun ReminderItem(
                     AppIcon(
                         icon = AppIcons.More,
                         contentDescription = "More",
-                        tint = DarkText.copy(alpha = 0.6f)
+                        tint = textColor.copy(alpha = 0.6f)
                     )
                 }
 
                 DropdownMenu(
                     expanded = showMenu,
                     onDismissRequest = { showMenu = false },
-                    modifier = Modifier.background(DarkCard)
+                    modifier = Modifier.background(cardColor)
                 ) {
                     if (reminder.isMedicine) {
                         DropdownMenuItem(
-                            text = { Text(if (reminder.isTakenToday) "Mark as Pending" else "Mark as Taken", color = DarkText) },
-                            leadingIcon = { Icon(if (reminder.isTakenToday) Icons.Default.Schedule else Icons.Default.CheckCircle, contentDescription = null, tint = if (reminder.isTakenToday) DarkText else com.own.remindme.ui.theme.Success) },
+                            text = { Text(if (reminder.isTakenToday) "Mark as Pending" else "Mark as Taken", color = textColor) },
+                            leadingIcon = { Icon(if (reminder.isTakenToday) Icons.Default.Schedule else Icons.Default.CheckCircle, contentDescription = null, tint = if (reminder.isTakenToday) textColor else com.own.remindme.ui.theme.Success) },
                             onClick = {
                                 showMenu = false
                                 onTakenClick()
@@ -198,7 +208,7 @@ fun ReminderItem(
                         )
                     }
                     DropdownMenuItem(
-                        text = { Text("Edit", color = DarkText) },
+                        text = { Text("Edit", color = textColor) },
                         leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null, tint = Primary) },
                         onClick = {
                             showMenu = false

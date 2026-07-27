@@ -2,6 +2,7 @@ package com.own.remindme.presentation.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.own.remindme.domain.model.AppTheme
 import com.own.remindme.domain.repository.UserPreferences
 import com.own.remindme.domain.repository.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,15 +36,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateMedicineSound(path: String?) {
+    fun updateCategorySound(category: String, path: String?) {
         viewModelScope.launch {
-            repository.updateMedicineSound(path)
+            repository.updateCategorySound(category, path)
         }
     }
 
-    fun updateOtherSound(path: String?) {
+    fun updateAppTheme(theme: AppTheme) {
         viewModelScope.launch {
-            repository.updateOtherSound(path)
+            repository.updateAppTheme(theme)
         }
     }
 }

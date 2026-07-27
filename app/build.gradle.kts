@@ -7,14 +7,29 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+configurations.all {
+    resolutionStrategy {
+        force(libs.androidx.concurrent.futures)
+        force(libs.androidx.concurrent.futures.ktx)
+    }
+}
+
 android {
 
     namespace = "com.own.remindme"
 
     compileSdk = 36
 
-    defaultConfig {
+    buildFeatures {
+        buildConfig = true
+    }
 
+    defaultConfig {
+        buildConfigField(
+            "String",
+            "GROQ_API_KEY",
+            "\"${project.findProperty("GROQ_API_KEY")}\""
+        )
         applicationId = "com.own.remindme"
 
         minSdk = 24
@@ -132,6 +147,12 @@ dependencies {
 
     // Icons
     implementation(libs.material.icons)
+
+    // Retrofit & OkHttp
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
 
     // Unit Test
     testImplementation(libs.junit)

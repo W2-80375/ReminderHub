@@ -3,6 +3,7 @@ package com.own.remindme.presentation.notifications
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -36,17 +38,19 @@ fun NotificationsScreen(
     viewModel: NotificationsViewModel = hiltViewModel()
 ) {
     val notifications by viewModel.notifications.collectAsState()
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val isDark = LocalDarkTheme.current
 
     Scaffold(
         containerColor = Color.Transparent,
         topBar = {
             TopAppBar(
-                title = { Text("Notifications", color = DarkText, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = { Text("Notifications", color = onSurface, fontSize = 20.sp, fontWeight = FontWeight.Bold) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    navigationIconContentColor = DarkText,
-                    titleContentColor = DarkText,
-                    actionIconContentColor = DarkText
+                    navigationIconContentColor = onSurface,
+                    titleContentColor = onSurface,
+                    actionIconContentColor = onSurface
                 ),
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
@@ -55,11 +59,11 @@ fun NotificationsScreen(
                 },
                 actions = {
                     if (notifications.isNotEmpty()) {
-                        TextButton(onClick = { viewModel.markAllAsRead() }) {
+                        TextButton(onClick = { viewModel.deleteAllNotifications() }) {
                             Text(
-                                "Mark all as read",
+                                "Delete all",
                                 style = TextStyle(
-                                    brush = Brush.linearGradient(GradientPurple),
+                                    color = Color.Red.copy(alpha = 0.7f),
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -73,7 +77,12 @@ fun NotificationsScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd)))
+                .background(
+                    if (isDark) 
+                        Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd))
+                    else
+                        Brush.verticalGradient(colors = listOf(Color.White, Color.White))
+                )
         )
 
         if (notifications.isEmpty()) {
@@ -94,8 +103,8 @@ fun NotificationsScreen(
                         )
                     }
                     Spacer(modifier = Modifier.height(24.dp))
-                    Text("No notifications yet", color = DarkText, fontWeight = FontWeight.Medium)
-                    Text("We'll alert you here", color = DarkText.copy(alpha = 0.4f), fontSize = 14.sp)
+                    Text("No notifications yet", color = onSurface, fontWeight = FontWeight.Medium)
+                    Text("We'll alert you here", color = onSurface.copy(alpha = 0.4f), fontSize = 14.sp)
                 }
             }
         } else {
@@ -125,6 +134,22 @@ fun NotificationItem(
     onDelete: () -> Unit
 ) {
     val sdf = remember { SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()) }
+    val onSurface = MaterialTheme.colorScheme.onSurface
+    val isDark = LocalDarkTheme.current
+    val cardColor = if (isDark) {
+        if (notification.isRead) DarkCard.copy(alpha = 0.4f) else DarkCard
+    } else {
+        if (notification.isRead) Color(0xFFF8F9FA) else Color.White
+    }
+
+    val isExpiry = notification.title.startsWith("Medicine Expiry Alert")
+    val displayTitle = if (notification.title.startsWith("Reminder: ")) {
+        "Reminder for \"${notification.title.removePrefix("Reminder: ")}\""
+    } else if (isExpiry) {
+        "Expiry Reminder for \"${notification.message.substringAfter("'").substringBefore("'")}\""
+    } else {
+        notification.title
+    }
 
     Card(
         modifier = Modifier
@@ -137,9 +162,13 @@ fun NotificationItem(
             },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
-            containerColor = if (notification.isRead) DarkCard.copy(alpha = 0.4f) else DarkCard
+            containerColor = cardColor
         ),
-        border = if (!notification.isRead) BorderStroke(0.8.dp, Brush.linearGradient(GradientPurple)) else null
+        border = if (!notification.isRead) 
+            BorderStroke(0.8.dp, Brush.linearGradient(GradientPurple)) 
+        else if (!isDark)
+            BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f))
+        else null
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -151,7 +180,7 @@ fun NotificationItem(
                     .clip(CircleShape)
                     .then(
                         if (notification.isRead) {
-                            Modifier.background(DarkText.copy(alpha = 0.05f))
+                            Modifier.background(onSurface.copy(alpha = 0.05f))
                         } else {
                             Modifier.background(Brush.linearGradient(GradientPurple))
                         }
@@ -159,9 +188,9 @@ fun NotificationItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = Icons.Default.Notifications,
+                    imageVector = if (isExpiry) Icons.Default.EventBusy else Icons.Default.Notifications,
                     contentDescription = null,
-                    tint = if (notification.isRead) DarkText.copy(alpha = 0.3f) else Color.White,
+                    tint = if (notification.isRead) onSurface.copy(alpha = 0.3f) else Color.White,
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -170,35 +199,27 @@ fun NotificationItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = notification.title,
-                    color = DarkText,
+                    text = displayTitle,
+                    color = onSurface,
                     fontWeight = if (notification.isRead) FontWeight.Medium else FontWeight.Bold,
                     fontSize = 15.sp
                 )
-                Text(
-                    text = notification.message,
-                    color = DarkText.copy(alpha = 0.6f),
-                    fontSize = 13.sp,
-                    maxLines = 2
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 2.dp)) {
+                    Text(
+                        text = if (isExpiry) "Expiry Reminder" else notification.category.lowercase().replaceFirstChar { it.uppercase() },
+                        color = if (isExpiry) Color.Red else Primary,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Box(modifier = Modifier.size(2.dp).clip(CircleShape).background(onSurface.copy(alpha = 0.2f)))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = sdf.format(Date(notification.timestamp)),
-                        color = DarkText.copy(alpha = 0.3f),
+                        color = onSurface.copy(alpha = 0.4f),
                         fontSize = 11.sp
                     )
-                    if (notification.frequency != "None") {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Box(modifier = Modifier.size(2.dp).clip(CircleShape).background(DarkText.copy(alpha = 0.2f)))
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = notification.frequency,
-                            color = Primary.copy(alpha = 0.6f),
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
                 }
             }
 
