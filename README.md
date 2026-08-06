@@ -66,7 +66,10 @@ RELEASE_KEY_PASSWORD=your_key_password
 
 ## Preview
 
+<<<<<<< HEAD
    
+=======
+>>>>>>> bc2f9613ae45b1ffba4216e433c0adb6f05c090c
 ![img_1.png](img_1.png)
 
 ![img_2.png](img_2.png)
