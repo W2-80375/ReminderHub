@@ -56,21 +56,21 @@ fun ReminderItem(
             .fillMaxWidth()
             .clickable { onClick() }
             .graphicsLayer {
-                rotationX = 2f
-                rotationY = -1f
+                rotationX = 1f
+                rotationY = -0.5f
                 cameraDistance = 16f * density
             }
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(12.dp))
             .background(cardColor)
             .border(
-                width = 0.8.dp,
+                width = 0.6.dp,
                 brush = Brush.linearGradient(
                     colors = if (isDark) 
                         listOf(Color.White.copy(alpha = 0.12f), Color.Transparent)
                     else
                         listOf(Color.Black.copy(alpha = 0.05f), Color.Transparent)
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(12.dp)
             )
     ) {
         // Taken/Pending Badge
@@ -78,33 +78,33 @@ fun ReminderItem(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .clip(RoundedCornerShape(bottomStart = 12.dp))
+                    .clip(RoundedCornerShape(bottomStart = 10.dp))
                     .background(if (reminder.isTakenToday) com.own.remindme.ui.theme.Success else Color(0xFFFFA500))
-                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                    .padding(horizontal = 10.dp, vertical = 3.dp)
             ) {
                 Text(
                     text = if (reminder.isTakenToday) "Taken" else "Pending",
                     color = Color.White,
-                    fontSize = 10.sp,
+                    fontSize = 9.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
         }
 
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(10.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             // 3D sphere indicator look
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(32.dp)
                     .clip(CircleShape)
                     .background(
                         Brush.radialGradient(
                             colors = listOf(Color.White.copy(alpha = 0.4f), Color.Transparent),
-                            center = Offset(8f, 8f)
+                            center = Offset(6f, 6f)
                         )
                     )
                     .background(Brush.linearGradient(colors = gradient))
@@ -114,22 +114,32 @@ fun ReminderItem(
                         icon = it,
                         contentDescription = null,
                         tint = Color.White,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
 
-            Spacer(Modifier.width(12.dp))
+            Spacer(Modifier.width(10.dp))
 
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = reminder.title,
-                    style = MaterialTheme.typography.titleSmall,
+                    fontSize = 14.sp,
                     color = textColor,
                     fontWeight = FontWeight.SemiBold
                 )
+
+                if (reminder.description.isNotBlank()) {
+                    Text(
+                        text = reminder.description,
+                        fontSize = 11.sp,
+                        color = subTextColor.copy(alpha = 0.8f),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
 
                 Text(
                     text = reminder.startDate,

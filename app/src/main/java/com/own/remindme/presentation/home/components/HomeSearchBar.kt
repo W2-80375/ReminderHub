@@ -21,15 +21,15 @@ fun HomeSearchBar(
     val containerColor = if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.08f)
 
     TextField(
-        modifier = Modifier.fillMaxWidth().height(48.dp),
+        modifier = Modifier.fillMaxWidth().height(45.dp),
         value = value,
         onValueChange = onValueChange,
-        textStyle = TextStyle(color = textColor, fontSize = 14.sp),
+        textStyle = TextStyle(color = textColor, fontSize = 13.sp),
         placeholder = {
             Text(
                 "Search reminders",
                 color = textColor.copy(alpha = 0.6f),
-                fontSize = 14.sp
+                fontSize = 13.sp
             )
         },
         leadingIcon = {
@@ -37,7 +37,7 @@ fun HomeSearchBar(
                 icon = AppIcons.Search,
                 contentDescription = null,
                 tint = textColor,
-                modifier = Modifier.size(20.dp)
+                modifier = Modifier.size(18.dp)
             )
         },
         singleLine = true,
@@ -51,6 +51,6 @@ fun HomeSearchBar(
             unfocusedIndicatorColor = Color.Transparent,
             disabledIndicatorColor = Color.Transparent
         ),
-        shape = RoundedCornerShape(12.dp)
+        shape = RoundedCornerShape(10.dp)
     )
 }

@@ -149,7 +149,7 @@ fun AnimatedFab(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Add Reminder",
                     tint = Color.White,
-                    modifier = Modifier.size(35.dp)
+                    modifier = Modifier.size(28.dp)
                 )
                 
 //                AnimatedVisibility(visible = expanded) {

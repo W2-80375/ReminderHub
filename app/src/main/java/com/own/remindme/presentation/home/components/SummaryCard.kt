@@ -41,20 +41,20 @@ fun SummaryCard(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(90.dp)
-                .offset(y = 6.dp)
+                .height(76.dp)
+                .offset(y = 4.dp)
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(gradient[0].copy(alpha = 0.3f), Color.Transparent)
                     ),
-                    shape = RoundedCornerShape(24.dp)
+                    shape = RoundedCornerShape(16.dp)
                 )
         )
 
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(24.dp))
+                .clip(RoundedCornerShape(16.dp))
                 .border(
                     width = 1.dp,
                     brush = Brush.verticalGradient(
@@ -63,7 +63,7 @@ fun SummaryCard(
                             Color.White.copy(alpha = 0.05f)
                         )
                     ),
-                    shape = RoundedCornerShape(24.dp)
+                    shape = RoundedCornerShape(16.dp)
                 ),
             colors = CardDefaults.cardColors(
                 containerColor = Color.Transparent
@@ -81,7 +81,7 @@ fun SummaryCard(
                             )
                         )
                     )
-                    .padding(16.dp)
+                    .padding(12.dp)
             ) {
                 // Top Right Icons
                 Row(
@@ -93,7 +93,7 @@ fun SummaryCard(
                             imageVector = it,
                             contentDescription = null,
                             tint = Color.White.copy(alpha = 0.8f),
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(14.dp)
                         )
                     }
 
@@ -105,7 +105,7 @@ fun SummaryCard(
                     Text(
                         text = count.toString(),
                         style = TextStyle(
-                            fontSize = 24.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Black,
                             color = Color.White,
                             shadow = Shadow(
@@ -118,7 +118,7 @@ fun SummaryCard(
 
                     Text(
                         text = title,
-                        style = MaterialTheme.typography.titleSmall,
+                        fontSize = 12.sp,
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 0.5.sp

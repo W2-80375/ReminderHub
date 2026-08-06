@@ -66,13 +66,10 @@ RELEASE_KEY_PASSWORD=your_key_password
 
 ## Preview
 
-*Note: Add screenshots of the Home Screen, AI Assistant, and Detail View here.*
-
+   
 ![img_1.png](img_1.png)
 
 ![img_2.png](img_2.png)
-
-![img_3.png](img_3.png)
 
 ![img_5.png](img_5.png)
 

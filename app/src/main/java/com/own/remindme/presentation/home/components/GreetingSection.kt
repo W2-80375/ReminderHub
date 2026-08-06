@@ -37,18 +37,18 @@ fun GreetingSection(
         ) {
             Text(
                 text = greeting,
-                style = MaterialTheme.typography.titleLarge,
+                fontSize = 18.sp,
                 color = onSurface,
                 fontWeight = FontWeight.Bold
             )
 
             Spacer(
-                modifier = Modifier.height(4.dp)
+                modifier = Modifier.height(2.dp)
             )
 
             Text(
                 text = "Manage all your reminders effortlessly",
-                style = MaterialTheme.typography.bodySmall,
+                fontSize = 11.sp,
                 color = onSurface.copy(alpha = 0.6f)
             )
         }

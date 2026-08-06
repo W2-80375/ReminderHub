@@ -216,8 +216,8 @@ fun SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                contentPadding = PaddingValues(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
                     SettingItemCard(
@@ -365,7 +365,7 @@ fun SettingsScreen(
                 item {
                     SettingItemCard(
                         title = "App Features",
-                        subtitle = "Everything RemindMe can do",
+                        subtitle = "Everything ReminderHub can do",
                         icon = Icons.Default.Info,
                         isExpanded = expandedSection == "Features",
                         onClick = { expandedSection = if (expandedSection == "Features") null else "Features" }
@@ -381,20 +381,20 @@ fun SettingsScreen(
                             "Adaptive Themes" to "Light, Dark, and System Default themes."
                         )
 
-                        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             features.forEach { (title, desc) ->
                                 Row(verticalAlignment = Alignment.Top) {
                                     Box(
                                         modifier = Modifier
-                                            .padding(top = 8.dp)
-                                            .size(6.dp)
+                                            .padding(top = 6.dp)
+                                            .size(4.dp)
                                             .clip(CircleShape)
                                             .background(onSurface.copy(alpha = 0.3f))
                                     )
-                                    Spacer(modifier = Modifier.width(12.dp))
+                                    Spacer(modifier = Modifier.width(8.dp))
                                     Column {
-                                        Text(title, color = onSurface, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                        Text(desc, color = onSurface.copy(alpha = 0.6f), fontSize = 12.sp)
+                                        Text(title, color = onSurface, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                                        Text(desc, color = onSurface.copy(alpha = 0.6f), fontSize = 11.sp, lineHeight = 15.sp)
                                     }
                                 }
                             }
@@ -424,23 +424,23 @@ fun SettingItemCard(
             .fillMaxWidth()
             .clickable { onClick() }
             .graphicsLayer {
-                shadowElevation = 4f
-                shape = RoundedCornerShape(16.dp)
+                shadowElevation = 2f
+                shape = RoundedCornerShape(12.dp)
                 clip = true
             },
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = cardColor
         ),
-        border = if (isExpanded) BorderStroke(0.8.dp, Brush.linearGradient(GradientPurple)) else null
+        border = if (isExpanded) BorderStroke(0.6.dp, Brush.linearGradient(GradientPurple)) else null
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+        Column(modifier = Modifier.padding(10.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .then(
                             if (isExpanded) {
@@ -455,24 +455,24 @@ fun SettingItemCard(
                         imageVector = icon,
                         contentDescription = null,
                         tint = if (isExpanded) Color.White else onSurface.copy(alpha = 0.3f),
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(12.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = title,
                         color = onSurface,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 15.sp
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
                     )
                     if (!isExpanded) {
                         Text(
                             text = subtitle,
                             color = onSurface.copy(alpha = 0.4f),
-                            fontSize = 13.sp
+                            fontSize = 12.sp
                         )
                     }
                 }
@@ -480,12 +480,13 @@ fun SettingItemCard(
                 Icon(
                     imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
                     contentDescription = null,
-                    tint = onSurface.copy(alpha = 0.3f)
+                    tint = onSurface.copy(alpha = 0.3f),
+                    modifier = Modifier.size(20.dp)
                 )
             }
 
             if (isExpanded) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
                 content()
             }
         }
@@ -508,11 +509,11 @@ fun SettingsEditableField(
         Text(
             text = title,
             color = onSurface.copy(alpha = 0.6f),
-            fontSize = 13.sp,
+            fontSize = 12.sp,
             fontWeight = FontWeight.Medium
         )
 
-        Spacer(modifier = Modifier.height(6.dp))
+        Spacer(modifier = Modifier.height(4.dp))
 
         BasicTextField(
             value = text,
@@ -523,7 +524,7 @@ fun SettingsEditableField(
             singleLine = true,
             textStyle = TextStyle(
                 color = onSurface,
-                fontSize = 17.sp
+                fontSize = 15.sp
             ),
             keyboardOptions = KeyboardOptions(
                 keyboardType = keyboardType,
@@ -540,7 +541,7 @@ fun SettingsEditableField(
                         Text(
                             placeholder,
                             color = onSurface.copy(alpha = 0.35f),
-                            fontSize = 17.sp
+                            fontSize = 15.sp
                         )
                     }
                     innerTextField()
@@ -549,7 +550,7 @@ fun SettingsEditableField(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
         HorizontalDivider(
             color = onSurface.copy(alpha = 0.12f),
@@ -577,19 +578,19 @@ fun SoundRecorderRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, color = onSurface, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(label, color = onSurface, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             Text(
                 if (isRecording) "Recording..." else if (isPlaying) "Playing..." else if (hasSound) "Sound Recorded" else "No custom sound",
                 color = if (isRecording || isPlaying) Color.Red else onSurface.copy(alpha = 0.5f),
-                fontSize = 12.sp
+                fontSize = 11.sp
             )
         }
         
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (hasSound && !isRecording) {
                 Box(
                     modifier = Modifier
-                        .size(29.dp)
+                        .size(26.dp)
                         .clip(CircleShape)
                         .then(
                             if (isPlaying) Modifier.background(Color.Transparent)
@@ -602,7 +603,7 @@ fun SoundRecorderRow(
                         CircularProgressIndicator(
                             modifier = Modifier.fillMaxSize(),
                             color = if (isDark) Color.White else Primary,
-                            strokeWidth = 2.dp
+                            strokeWidth = 1.5.dp
                         )
                     }
                     AnimatedContent(
@@ -616,13 +617,13 @@ fun SoundRecorderRow(
                             imageVector = if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (playing) "Pause" else "Play",
                             tint = if (playing) (if (isDark) Color.White else Primary) else Color.White,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(12.dp)
                         )
                     }
                 }
                 Box(
                     modifier = Modifier
-                        .size(29.dp)
+                        .size(26.dp)
                         .clip(CircleShape)
                         .background(Brush.linearGradient(GradientRed))
                         .clickable { onDeleteClick() },
@@ -632,13 +633,13 @@ fun SoundRecorderRow(
                         imageVector = Icons.Default.Delete,
                         contentDescription = "Delete",
                         tint = Color.White,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
             } else {
                 Box(
                     modifier = Modifier
-                        .size(29.dp)
+                        .size(26.dp)
                         .clip(CircleShape)
                         .background(if (isRecording) Color.Red.copy(alpha = 0.2f) else Primary)
                         .clickable { onRecordClick() },
@@ -648,7 +649,7 @@ fun SoundRecorderRow(
                         imageVector = if (isRecording) Icons.Default.Stop else Icons.Default.Mic,
                         contentDescription = "Record",
                         tint = if (isRecording) Color.Red else Color.White,
-                        modifier = Modifier.size(14.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
             }

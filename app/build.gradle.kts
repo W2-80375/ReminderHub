@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -13,6 +15,11 @@ configurations.all {
         force(libs.androidx.concurrent.futures.ktx)
     }
 }
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localProperties.load(localPropertiesFile.inputStream())
+}
 
 android {
 
@@ -20,15 +27,32 @@ android {
 
     compileSdk = 36
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(localProperties.getProperty("RELEASE_STORE_FILE") ?: "")
+            storePassword = localProperties.getProperty("RELEASE_STORE_PASSWORD")
+            keyAlias = localProperties.getProperty("RELEASE_KEY_ALIAS")
+            keyPassword = localProperties.getProperty("RELEASE_KEY_PASSWORD")
+        }
+    }
     buildFeatures {
         buildConfig = true
     }
 
     defaultConfig {
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+        val groqApiKey = localProperties.getProperty("GROQ_API_KEY")
+            ?: project.findProperty("GROQ_API_KEY")
+            ?: ""
+
         buildConfigField(
             "String",
             "GROQ_API_KEY",
-            "\"${project.findProperty("GROQ_API_KEY")}\""
+            "\"$groqApiKey\""
         )
         applicationId = "com.own.remindme"
 
@@ -36,9 +60,9 @@ android {
 
         targetSdk = 36
 
-        versionCode = 1
+        versionCode = 2
 
-        versionName = "1.0"
+        versionName = "1.1"
 
         testInstrumentationRunner =
             "androidx.test.runner.AndroidJUnitRunner"
@@ -48,7 +72,8 @@ android {
 
         release {
 
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
 
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

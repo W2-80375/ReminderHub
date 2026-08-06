@@ -38,8 +38,8 @@ fun CategoryChip(
 
     Box(
         modifier = Modifier
-            .padding(end = 8.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .padding(end = 6.dp)
+            .clip(RoundedCornerShape(12.dp))
             .then(
                 if (selected) {
                     Modifier.background(Brush.linearGradient(colors = gradient))
@@ -49,17 +49,17 @@ fun CategoryChip(
                         .border(
                             1.dp, 
                             if (isDark) Color.White.copy(alpha = 0.1f) else Color.Black.copy(alpha = 0.05f), 
-                            RoundedCornerShape(16.dp)
+                            RoundedCornerShape(12.dp)
                         )
                 }
             )
             .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp)
     ) {
         Text(
             text = title,
             color = if (selected) Color.White else textColor.copy(alpha = 0.7f),
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
         )
     }

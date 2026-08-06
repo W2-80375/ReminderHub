@@ -4,6 +4,7 @@ import android.util.Log
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
+import retrofit2.HttpException
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.Header
@@ -89,6 +90,11 @@ class GroqService @Inject constructor() {
     suspend fun processInput(input: String): String {
         Log.d("GroqService", "processInput() called with input: '$input'")
         
+        if (apiKey.isBlank() || apiKey == "null") {
+            Log.e("GroqService", "API Key is missing or invalid")
+            return "Error: Groq API key is missing. Please add GROQ_API_KEY to local.properties."
+        }
+        
         // Provide the current date and time context to the AI
         val now = java.util.Date()
         val dateStr = java.text.SimpleDateFormat("EEEE, yyyy-MM-dd", java.util.Locale.getDefault()).format(now)
@@ -118,6 +124,13 @@ class GroqService @Inject constructor() {
 
             Log.d("GroqService", "AI Response content: $responseText")
             responseText
+        } catch (e: HttpException) {
+            Log.e("GroqService", "HTTP Exception in processInput: ${e.code()}", e)
+            when (e.code()) {
+                401 -> "Error: Unauthorized. Please check your Groq API key."
+                429 -> "Error: Rate limit exceeded. Please try again later."
+                else -> "Error: Server returned ${e.code()}. ${e.message()}"
+            }
         } catch (e: Exception) {
             Log.e("GroqService", "Exception in processInput", e)
             "Error: ${e.message}"

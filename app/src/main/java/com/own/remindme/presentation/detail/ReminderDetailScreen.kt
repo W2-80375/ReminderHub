@@ -58,7 +58,7 @@ fun ReminderDetailScreen(
     val context = LocalContext.current
     val reminder = viewModel.reminder.value
     val onSurface = MaterialTheme.colorScheme.onSurface
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalDarkTheme.current
     val cardColor = if (isDark) DarkCard else Color.White
 
     Scaffold(
@@ -101,24 +101,24 @@ fun ReminderDetailScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(20.dp)
+                    .padding(16.dp)
                     .verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(20.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Header Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(24.dp),
+                    shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = cardColor),
                     border = if (isDark) null else BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f))
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp),
+                        modifier = Modifier.padding(16.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(64.dp)
+                                .size(48.dp)
                                 .clip(CircleShape)
                                 .background(
                                     when (rem.category) {
@@ -153,7 +153,7 @@ fun ReminderDetailScreen(
                                         imageVector = icon.imageVector,
                                         contentDescription = null,
                                         tint = tint,
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
 
@@ -162,17 +162,17 @@ fun ReminderDetailScreen(
                                         painter = painterResource(icon.resId),
                                         contentDescription = null,
                                         tint = tint,
-                                        modifier = Modifier.size(32.dp)
+                                        modifier = Modifier.size(24.dp)
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         Text(
                             text = rem.title,
-                            style = MaterialTheme.typography.headlineSmall,
+                            fontSize = 18.sp,
                             color = onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -202,7 +202,7 @@ fun ReminderDetailScreen(
                             modifier = Modifier.padding(start = 4.dp)
                         )
                         LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             items(rem.imageUris) { uriString ->
@@ -213,11 +213,11 @@ fun ReminderDetailScreen(
 
                                 Card(
                                     modifier = Modifier
-                                        .size(if (isImage) 150.dp else 100.dp)
+                                        .size(if (isImage) 130.dp else 80.dp)
                                         .border(
                                             width = if (isDark) 0.dp else 1.dp,
                                             color = if (isDark) Color.Transparent else Color.Black.copy(alpha = 0.05f),
-                                            shape = RoundedCornerShape(16.dp)
+                                            shape = RoundedCornerShape(12.dp)
                                         )
                                         .clickable {
                                             try {
@@ -230,7 +230,7 @@ fun ReminderDetailScreen(
                                                 Toast.makeText(context, "No app found to open this file", Toast.LENGTH_SHORT).show()
                                             }
                                         },
-                                    shape = RoundedCornerShape(16.dp),
+                                    shape = RoundedCornerShape(12.dp),
                                     colors = CardDefaults.cardColors(containerColor = cardColor)
                                 ) {
                                     if (isImage) {
@@ -242,12 +242,12 @@ fun ReminderDetailScreen(
                                         )
                                     } else {
                                         Column(
-                                            modifier = Modifier.fillMaxSize().padding(12.dp),
+                                            modifier = Modifier.fillMaxSize().padding(8.dp),
                                             verticalArrangement = Arrangement.Center,
                                             horizontalAlignment = Alignment.CenterHorizontally
                                         ) {
-                                            Icon(Icons.Default.AttachFile, contentDescription = null, tint = Primary, modifier = Modifier.size(32.dp))
-                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Icon(Icons.Default.AttachFile, contentDescription = null, tint = Primary, modifier = Modifier.size(24.dp))
+                                            Spacer(modifier = Modifier.height(4.dp))
                                             val fileName = remember(uriString) {
                                                 try {
                                                     val uri = Uri.parse(uriString)
@@ -267,7 +267,7 @@ fun ReminderDetailScreen(
                                             Text(
                                                 fileName,
                                                 color = onSurface,
-                                                fontSize = 10.sp,
+                                                fontSize = 9.sp,
                                                 maxLines = 1,
                                                 fontWeight = FontWeight.Medium
                                             )
@@ -350,34 +350,34 @@ fun DetailItem(
     valueColor: Color? = null
 ) {
     val onSurface = MaterialTheme.colorScheme.onSurface
-    val isDark = isSystemInDarkTheme()
+    val isDark = LocalDarkTheme.current
 
     Card(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = cardColor),
         border = if (isDark) null else BorderStroke(1.dp, Color.Black.copy(alpha = 0.05f))
     ) {
         Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = Primary,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(20.dp)
             )
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Text(
                     text = label,
-                    style = MaterialTheme.typography.labelMedium,
+                    fontSize = 11.sp,
                     color = onSurface.copy(alpha = 0.5f)
                 )
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.bodyLarge,
+                    fontSize = 14.sp,
                     color = valueColor ?: onSurface,
                     fontWeight = FontWeight.Medium
                 )

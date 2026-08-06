@@ -121,9 +121,9 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(horizontal = 20.dp)
+                    .padding(horizontal = 16.dp)
             ) {
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 GreetingSection(
                     greeting = state.greeting,
@@ -136,10 +136,10 @@ fun HomeScreen(
                     }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     SummaryCard(
                         modifier = Modifier.weight(1f),
@@ -156,7 +156,7 @@ fun HomeScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(10.dp))
 
                 HomeSearchBar(
                     value = state.search,
@@ -182,9 +182,9 @@ fun HomeScreen(
                             })
                         },
                     contentPadding = PaddingValues(
-                        bottom = 150.dp
+                        bottom = 120.dp
                     ),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     if (state.todayReminders.isNotEmpty()) {
                         item {
