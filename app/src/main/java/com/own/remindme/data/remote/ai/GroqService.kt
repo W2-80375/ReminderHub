@@ -24,6 +24,9 @@ class GroqService @Inject constructor() {
         }
         val client = OkHttpClient.Builder()
             .addInterceptor(logging)
+            .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+            .writeTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
             .build()
 
         Retrofit.Builder()
@@ -54,7 +57,19 @@ class GroqService @Inject constructor() {
         If the title is missing but the category is provided, politely ask "What should I name this [Category] reminder?".
         
         If any CRITICAL field (title, date, time, repeatType) is missing, ask the user for it politely and briefly.
-        repeatType is MANDATORY. 
+        repeatType is MANDATORY.
+        
+        REPEAT TYPE GUIDANCE (IMPORTANT):
+        When asking for repeatType, provide simple examples to the user:
+        - English: "How often should this repeat? (e.g., Every day, Weekly, Monthly)"
+        - Hindi: "Yeh kab kab dohrana chahiye? (Jaise ki: Har din, Har hafte, ya Har mahine)"
+        
+        Mapping for repeatType:
+        - DAILY: "Every day", "Daily", "Har din", "Rozana"
+        - ALTERNATE: "Every other day", "Ek din chodkar"
+        - WEEKLY: "Every week", "Weekly", "Har hafte", "Saptahik"
+        - MONTHLY: "Every month", "Monthly", "Har mahine"
+        - YEARLY: "Every year", "Yearly", "Har saal"
         
         Time Ambiguity:
         If the user provides a time without specifying AM or PM (e.g., "3 o'clock", "at 5"), you MUST ask if they mean AM or PM before proceeding, unless it is clearly implied by context (like "breakfast at 8" or "dinner at 7").
@@ -80,6 +95,12 @@ class GroqService @Inject constructor() {
           "message": "Your polite question to the user"
         }
         
+        BILINGUAL SUPPORT (CRITICAL):
+        - If the user speaks in Hindi, you MUST respond in Hindi (using Devanagari script).
+        - If the user speaks in English, you MUST respond in English.
+        - If the user mixes languages (Hinglish), you may respond in Hinglish or the dominant language used.
+        - Regardless of the language used for conversation, the JSON "title" and "description" should ideally be in the language the user used, but the "repeatType" and "category" keys MUST remain in English as defined above.
+        
         Keep your verbal responses very short and friendly.
     """.trimIndent()
 
@@ -101,40 +122,63 @@ class GroqService @Inject constructor() {
         val timeStr = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault()).format(now)
         val contextInfo = "Today is $dateStr, and the current time is $timeStr. Use this for relative dates and to help clarify ambiguous times."
         
-        return try {
-            if (messages.none { it.role == "system" && it.content.contains("Today is") }) {
-                messages.add(GroqMessage(role = "system", content = contextInfo))
-            }
-
-            val userMsg = GroqMessage(role = "user", content = input)
-            messages.add(userMsg)
-            Log.d("GroqService", "Current conversation history size: ${messages.size}")
-            
-            val request = GroqRequest(
-                model = "llama-3.3-70b-versatile",
-                messages = messages
-            )
-            Log.d("GroqService", "Sending request to Groq API...")
-            val response = api.getChatCompletion("Bearer $apiKey", request)
-            Log.d("GroqService", "Response received from Groq API")
-            
-            val responseText = response.choices.firstOrNull()?.message?.content ?: "Sorry, I couldn't process that."
-            
-            messages.add(GroqMessage(role = "assistant", content = responseText))
-
-            Log.d("GroqService", "AI Response content: $responseText")
-            responseText
-        } catch (e: HttpException) {
-            Log.e("GroqService", "HTTP Exception in processInput: ${e.code()}", e)
-            when (e.code()) {
-                401 -> "Error: Unauthorized. Please check your Groq API key."
-                429 -> "Error: Rate limit exceeded. Please try again later."
-                else -> "Error: Server returned ${e.code()}. ${e.message()}"
-            }
-        } catch (e: Exception) {
-            Log.e("GroqService", "Exception in processInput", e)
-            "Error: ${e.message}"
+        if (messages.none { it.role == "system" && it.content.contains("Today is") }) {
+            messages.add(GroqMessage(role = "system", content = contextInfo))
         }
+
+        val userMsg = GroqMessage(role = "user", content = input)
+        messages.add(userMsg)
+        
+        var lastException: Exception? = null
+        val maxRetries = 3
+        
+        for (attempt in 1..maxRetries) {
+            try {
+                Log.d("GroqService", "Attempt $attempt: Sending request to Groq API...")
+                val request = GroqRequest(
+                    model = "llama-3.3-70b-versatile",
+                    messages = messages
+                )
+                
+                val response = api.getChatCompletion("Bearer $apiKey", request)
+                Log.d("GroqService", "Response received from Groq API")
+                
+                val responseText = response.choices.firstOrNull()?.message?.content ?: "Sorry, I couldn't process that."
+                messages.add(GroqMessage(role = "assistant", content = responseText))
+                
+                Log.d("GroqService", "AI Response content: $responseText")
+                return responseText
+                
+            } catch (e: HttpException) {
+                Log.e("GroqService", "HTTP Exception (Attempt $attempt): ${e.code()}", e)
+                if (e.code() == 401 || e.code() == 429) {
+                    // Don't retry auth or rate limit errors
+                    return when (e.code()) {
+                        401 -> "Error: Unauthorized. Please check your Groq API key."
+                        429 -> "Error: Rate limit exceeded. Please try again later."
+                        else -> "Error: Server error ${e.code()}"
+                    }
+                }
+                lastException = e
+            } catch (e: Exception) {
+                Log.e("GroqService", "Exception (Attempt $attempt) in processInput", e)
+                lastException = e
+            }
+            
+            // If we're here, we failed. Wait before retrying (exponential backoff)
+            if (attempt < maxRetries) {
+                val delayTime = attempt * 1000L // 1s, 2s...
+                Log.d("GroqService", "Retrying in ${delayTime}ms...")
+                kotlinx.coroutines.delay(delayTime)
+            }
+        }
+        
+        // If we exhausted retries, remove the last user message so the history stays clean for next attempt
+        if (messages.lastOrNull() == userMsg) {
+            messages.removeAt(messages.size - 1)
+        }
+        
+        return "Error: ${lastException?.message ?: "Something went wrong. Please check your connection."}"
     }
 
     fun clearChat() {

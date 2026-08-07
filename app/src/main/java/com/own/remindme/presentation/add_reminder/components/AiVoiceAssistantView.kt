@@ -167,5 +167,50 @@ fun AiVoiceAssistantView(
                 lineHeight = 22.sp
             )
         }
+
+        // Suggestions/Hints
+        val isAskingForRepeat = aiResponse.contains("kab kab", ignoreCase = true) || 
+                               aiResponse.contains("repeat", ignoreCase = true) ||
+                               aiResponse.contains("dohrana", ignoreCase = true)
+
+        if (isListening && isAskingForRepeat) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text(
+                    text = "Try saying:",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = onSurface.copy(alpha = 0.5f)
+                )
+                
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    SuggestionChip("Every day / Har din")
+                    SuggestionChip("Weekly / Har hafte")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SuggestionChip(text: String) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f)),
+        modifier = Modifier.padding(2.dp)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+            fontSize = 11.sp,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
     }
 }

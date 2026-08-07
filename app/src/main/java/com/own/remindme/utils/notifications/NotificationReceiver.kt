@@ -368,16 +368,62 @@ class NotificationReceiver : BroadcastReceiver() {
                 null
             )
             
-            // Initiate Call
+            // Create a high-priority notification with a Call Action
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val channelId = "emergency_alerts"
+            
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (notificationManager.getNotificationChannel(channelId) == null) {
+                    val channel = NotificationChannel(channelId, "Emergency Alerts", NotificationManager.IMPORTANCE_HIGH).apply {
+                        description = "Critical alerts for missed medication"
+                        enableLights(true)
+                        lightColor = android.graphics.Color.RED
+                        enableVibration(true)
+                        setBypassDnd(true)
+                        lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+                    }
+                    notificationManager.createNotificationChannel(channel)
+                }
+            }
+
             val callIntent = Intent(Intent.ACTION_CALL).apply {
                 data = Uri.parse("tel:$phoneNumber")
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
-            if (context.checkSelfPermission(android.Manifest.permission.CALL_PHONE) == PackageManager.PERMISSION_GRANTED) {
-                context.startActivity(callIntent)
+            val callPendingIntent = PendingIntent.getActivity(
+                context, 
+                999, 
+                callIntent, 
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val fullScreenIntent = Intent(context, MainActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                putExtra("EMERGENCY_ALERT", true)
+                putExtra("MEDICINE_NAME", medicineName)
             }
+            val fullScreenPendingIntent = PendingIntent.getActivity(
+                context,
+                998,
+                fullScreenIntent,
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+
+            val builder = NotificationCompat.Builder(context, channelId)
+                .setSmallIcon(android.R.drawable.ic_dialog_alert)
+                .setContentTitle("EMERGENCY ALERT")
+                .setContentText("Medicine '$medicineName' missed! Contact emergency contact immediately.")
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setFullScreenIntent(fullScreenPendingIntent, true)
+                .setColor(android.graphics.Color.RED)
+                .setOngoing(true)
+                .addAction(android.R.drawable.ic_menu_call, "CALL EMERGENCY CONTACT", callPendingIntent)
+                .setAutoCancel(true)
+
+            notificationManager.notify(300000000, builder.build())
+            
         } catch (e: Exception) {
-            e.printStackTrace()
+            android.util.Log.e("NotificationReceiver", "Error sending emergency alert", e)
         }
     }
 }

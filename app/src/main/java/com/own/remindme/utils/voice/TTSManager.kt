@@ -68,6 +68,14 @@ class TTSManager @Inject constructor(
         this.onCompletion = onFinished
 
         if (isInitialized && tts != null) {
+            // Detect language for Hindi vs English
+            val isHindi = text.any { it in '\u0900'..'\u097F' }
+            if (isHindi) {
+                tts?.setLanguage(Locale("hi", "IN"))
+            } else {
+                tts?.setLanguage(Locale("en", "IN"))
+            }
+
             val utteranceId = "ai_response_${System.currentTimeMillis()}"
             val params = android.os.Bundle()
             params.putString(TextToSpeech.Engine.KEY_PARAM_UTTERANCE_ID, utteranceId)
