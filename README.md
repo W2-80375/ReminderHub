@@ -7,9 +7,10 @@
 ##  Key Features
 
 ###  AI Voice Assistant
-- **Natural Interaction**: Create reminders by simply talking to the app. 
-- **Smart Parsing**: Powered by Groq AI, the assistant automatically identifies titles, categories, dates, and times from your natural speech.
-- **Interactive Session**: The app talks back to you to confirm details or ask for missing information.
+- **Bilingual Support**: Fully supports **English**, **Hindi**, and **Hinglish**. The assistant intelligently detects and responds in the language you speak.
+- **Natural Interaction**: Create reminders by simply talking to the app in your preferred language. 
+- **Smart Parsing**: Powered by Groq AI, the assistant automatically identifies titles, categories, dates, and times from natural speech (English or Hindi).
+- **Interactive Session**: The app talks back to you to confirm details or ask for missing information in the appropriate language.
 
 ###  Medicine & Safety First
 - **Missed Dose Safety Net**: For high-priority medicine, the app tracks misses. If a reminder is ignored 3 times, it can automatically trigger an SMS or call to a pre-configured emergency contact.
@@ -66,10 +67,6 @@ RELEASE_KEY_PASSWORD=your_key_password
 
 ## Preview
 
-<<<<<<< HEAD
-   
-=======
->>>>>>> bc2f9613ae45b1ffba4216e433c0adb6f05c090c
 ![img_1.png](img_1.png)
 
 ![img_2.png](img_2.png)
