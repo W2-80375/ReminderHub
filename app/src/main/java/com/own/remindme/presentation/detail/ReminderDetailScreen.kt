@@ -46,6 +46,7 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
+import com.own.remindme.domain.model.Reminder
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -55,45 +56,62 @@ fun ReminderDetailScreen(
     navController: NavController,
     viewModel: ReminderDetailViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
     val reminder = viewModel.reminder.value
+    
+    ReminderDetailContent(
+        reminder = reminder,
+        onBackClick = { navController.navigateUp() }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ReminderDetailContent(
+    reminder: Reminder?,
+    onBackClick: (() -> Unit)? = null,
+    showTopBar: Boolean = true
+) {
+    val context = LocalContext.current
     val onSurface = MaterialTheme.colorScheme.onSurface
     val isDark = LocalDarkTheme.current
     val cardColor = if (isDark) DarkCard else Color.White
 
-    Scaffold(
-        containerColor = Color.Transparent,
-        topBar = {
-            TopAppBar(
-                title = { Text(text = "Reminder Details", color = onSurface) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    navigationIconContentColor = onSurface,
-                    titleContentColor = onSurface
-                ),
-                navigationIcon = {
-                    IconButton(onClick = { navController.navigateUp() }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
-                    }
-                }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                if (isDark) 
+                    Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd))
+                else
+                    Brush.verticalGradient(colors = listOf(Color.White, Color.White))
             )
-        }
-    ) { padding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    if (isDark) 
-                        Brush.verticalGradient(colors = listOf(DarkBgStart, DarkBgEnd))
-                    else
-                        Brush.verticalGradient(colors = listOf(Color.White, Color.White))
-                )
-        )
-
-        reminder?.let { rem ->
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                if (showTopBar) {
+                    TopAppBar(
+                        title = { Text(text = "Reminder Details", color = onSurface) },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = Color.Transparent,
+                            navigationIconContentColor = onSurface,
+                            titleContentColor = onSurface
+                        ),
+                        navigationIcon = {
+                            if (onBackClick != null) {
+                                IconButton(onClick = onBackClick) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back"
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
+            }
+        ) { padding ->
+            reminder?.let { rem ->
             val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
             val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
@@ -339,6 +357,7 @@ fun ReminderDetailScreen(
             CircularProgressIndicator(color = Primary)
         }
     }
+}
 }
 
 @Composable

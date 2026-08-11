@@ -23,6 +23,7 @@
 - **Flexible Recurrence**: Support for Daily, Weekly, Monthly, and Yearly repeating schedules.
 
 ###  Modern & Accessible UI
+- **Adaptive Layouts**: Optimized for **Foldables** and **Tablets** using `WindowSizeClass`. The app dynamically switches between a single-pane and a list-detail dual-pane view.
 - **Dynamic Theming**: Beautiful Light and Dark modes with optimized contrast.
 - **Glassmorphic Elements**: Modern UI design with 3D-styled indicator spheres and glassmorphic cards.
 - **Custom Sound Alerts**: Record your own voice or sounds for personalized category notifications.
@@ -32,6 +33,7 @@
 ##  Technology Stack
 
 - **UI**: Jetpack Compose (100% Kotlin)
+- **Adaptive Design**: Material 3 `WindowSizeClass` for multi-device support
 - **Architecture**: Clean Architecture with MVVM
 - **Dependency Injection**: Hilt
 - **Database**: Room (Local caching & persistence)
@@ -72,6 +74,12 @@ RELEASE_KEY_PASSWORD=your_key_password
 ![img_2.png](img_2.png)
 
 ![img_5.png](img_5.png)
+
+### Adaptive Tablet Layout (Landscape)
+![img_6.png](img_6.png)
+
+### Adaptive Tablet Layout (Portrait)
+![img_7.png](img_7.png)
 
 
 ## Privacy & Permissions

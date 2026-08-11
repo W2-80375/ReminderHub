@@ -59,10 +59,10 @@ class GroqService @Inject constructor() {
         If any CRITICAL field (title, date, time, repeatType) is missing, ask the user for it politely and briefly.
         repeatType is MANDATORY.
         
-        REPEAT TYPE GUIDANCE (IMPORTANT):
-        When asking for repeatType, provide simple examples to the user:
-        - English: "How often should this repeat? (e.g., Every day, Weekly, Monthly)"
-        - Hindi: "Yeh kab kab dohrana chahiye? (Jaise ki: Har din, Har hafte, ya Har mahine)"
+        REPEAT TYPE GUIDANCE:
+        When asking for repeatType, provide simple examples to the user in the language they are using:
+        - If English: "How often should this repeat? (e.g., Every day, Weekly, Monthly)"
+        - If Hindi: "यह कब कब दोहराना चाहिए? (जैसे कि: हर दिन, हर हफ्ते, या हर महीने)"
         
         Mapping for repeatType:
         - DAILY: "Every day", "Daily", "Har din", "Rozana"
@@ -96,10 +96,20 @@ class GroqService @Inject constructor() {
         }
         
         BILINGUAL SUPPORT (CRITICAL):
-        - If the user speaks in Hindi, you MUST respond in Hindi (using Devanagari script).
-        - If the user speaks in English, you MUST respond in English.
-        - If the user mixes languages (Hinglish), you may respond in Hinglish or the dominant language used.
-        - Regardless of the language used for conversation, the JSON "title" and "description" should ideally be in the language the user used, but the "repeatType" and "category" keys MUST remain in English as defined above.
+        - You MUST respond ONLY in the language the user is using.
+        - DO NOT provide translations or bilingual responses.
+        - If user speaks English, respond 100% in English.
+        - If user speaks Hindi, respond 100% in Hindi (Devanagari).
+        - NEVER mix both languages in a single response unless it is natural Hinglish.
+        - Do not provide both "English: ..." and "Hindi: ..." in your output. Pick ONE.
+        - Do not explicitly mention that you are switching languages; just speak naturally.
+        
+        Example:
+        User: "Hello"
+        Response: "Hi! What reminder should I set for you?" (English only)
+        
+        User: "नमस्ते"
+        Response: "नमस्ते! मैं आपके लिए क्या रिमाइंडर सेट करूँ?" (Hindi only)
         
         Keep your verbal responses very short and friendly.
     """.trimIndent()
@@ -155,7 +165,7 @@ class GroqService @Inject constructor() {
                     // Don't retry auth or rate limit errors
                     return when (e.code()) {
                         401 -> "Error: Unauthorized. Please check your Groq API key."
-                        429 -> "Error: Rate limit exceeded. Please try again later."
+                        429 -> "Error: AI service limit exceeds for today try tommorrow or add manually"
                         else -> "Error: Server error ${e.code()}"
                     }
                 }

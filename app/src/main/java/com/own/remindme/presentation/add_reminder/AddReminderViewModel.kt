@@ -55,6 +55,7 @@ class AddReminderViewModel @Inject constructor(
 
     private var sessionTimerJob: Job? = null
     private var isSessionActive = false
+    private var isCurrentSessionHindi = false
 
     private val _reminderTitle = mutableStateOf("")
     val reminderTitle: State<String> = _reminderTitle
@@ -169,6 +170,7 @@ class AddReminderViewModel @Inject constructor(
     private fun startAiSession() {
         Log.d("AddReminderVM", "Starting AI Session")
         isSessionActive = true
+        isCurrentSessionHindi = false // Reset language at start of session
         _aiResponse.value = ""
         _aiRecognizedText.value = ""
         groqService.clearChat()
@@ -181,9 +183,12 @@ class AddReminderViewModel @Inject constructor(
         
         Log.d("AddReminderVM", "Internal: Start Listening")
         _convState.value = ConversationState.LISTENING
-        _aiRecognizedText.value = "Listening..."
+        _aiRecognizedText.value = if (isCurrentSessionHindi) "सुन रहा हूँ..." else "Listening..."
+        
+        val lang = if (isCurrentSessionHindi) "hi-IN" else "en-IN"
         
         speechRecognizerManager.startListening(
+            languageTag = lang,
             onResult = { text ->
                 Log.d("AddReminderVM", "Speech result: $text")
                 _aiRecognizedText.value = text
@@ -201,7 +206,12 @@ class AddReminderViewModel @Inject constructor(
         when (error) {
             SpeechRecognizer.ERROR_NO_MATCH -> {
                 Log.d("AddReminderVM", "No match. Prompting user.")
-                speakAndListen("I didn't catch that. Could you say it again?")
+                val msg = if (isCurrentSessionHindi) {
+                    "माफ़ कीजिये, मैं समझ नहीं पाया। क्या आप फिर से कह सकते हैं?"
+                } else {
+                    "I didn't catch that. Could you say it again?"
+                }
+                speakAndListen(msg)
             }
             SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> {
                 Log.d("AddReminderVM", "Timeout. Checking if we should continue.")
@@ -220,24 +230,59 @@ class AddReminderViewModel @Inject constructor(
     }
 
     private fun processAiInput(text: String) {
-        if (text.isBlank() || text == "Listening...") return
+        val listeningText = if (isCurrentSessionHindi) "सुन रहा हूँ..." else "Listening..."
+        if (text.isBlank() || text == listeningText) return
         
         Log.d("AddReminderVM", "Processing input: $text")
+        
+        // Detect language from user input
+        val hasDevanagari = text.any { it in '\u0900'..'\u097F' }
+        val mentionsHindi = text.contains("hindi", ignoreCase = true) || text.contains("हिंदी", ignoreCase = true)
+        
+        if (!isCurrentSessionHindi && (hasDevanagari || mentionsHindi)) {
+            isCurrentSessionHindi = true
+        }
+        
         _convState.value = ConversationState.PROCESSING
         resetSessionTimer()
         
         viewModelScope.launch {
             try {
                 val response = groqService.processInput(text)
+                // Also detect language from AI response to stay in sync
+                if (!isCurrentSessionHindi && response.any { it in '\u0900'..'\u097F' }) {
+                    isCurrentSessionHindi = true
+                }
                 handleAiResponse(response)
             } catch (e: Exception) {
                 Log.e("AddReminderVM", "Groq error", e)
-                speakAndListen("Sorry, I'm having trouble connecting. Let's try again in a moment.")
+                val msg = if (isCurrentSessionHindi) {
+                    "क्षमा करें, मुझे जुड़ने में समस्या हो रही है। कृपया कुछ देर बाद फिर से प्रयास करें।"
+                } else {
+                    "Sorry, I'm having trouble connecting. Let's try again in a moment."
+                }
+                speakAndListen(msg)
             }
         }
     }
 
     private fun handleAiResponse(response: String) {
+        if (response.startsWith("Error: AI service limit exceeds")) {
+            val msg = if (isCurrentSessionHindi) {
+                "आज के लिए एआई सेवा की सीमा समाप्त हो गई है, कृपया कल प्रयास करें या मैन्युअल रूप से जोड़ें"
+            } else {
+                "AI service limit exceeds for today try tommorrow or add manually"
+            }
+            _aiResponse.value = msg
+            speakVerbalOnly(msg) {
+                stopAiListening()
+            }
+            viewModelScope.launch {
+                _eventFlow.emit(UiEvent.ShowSnackbar(msg))
+            }
+            return
+        }
+
         val (verbal, json) = parseAiResponse(response)
         _aiResponse.value = verbal
 
@@ -255,7 +300,17 @@ class AddReminderViewModel @Inject constructor(
                         saveAndFinish()
                     }
                 } else {
-                    speakAndListen("I have everything except the $missingField. Could you please provide it?")
+                    val translatedField = when (missingField) {
+                        "title" -> if (isCurrentSessionHindi) "नाम" else "title"
+                        "frequency" -> if (isCurrentSessionHindi) "दोहराव" else "frequency"
+                        else -> missingField
+                    }
+                    val msg = if (isCurrentSessionHindi) {
+                        "मेरे पास $translatedField को छोड़कर सब कुछ है। क्या आप कृपया इसे प्रदान कर सकते हैं?"
+                    } else {
+                        "I have everything except the $missingField. Could you please provide it?"
+                    }
+                    speakAndListen(msg)
                 }
             } else {
                 val msg = json.optString("message", verbal)
@@ -283,7 +338,7 @@ class AddReminderViewModel @Inject constructor(
         
         verbal = verbal.replace("```json", "").replace("```", "").trim()
         if (verbal.isEmpty() && json != null) {
-            verbal = json.optString("message", "Processing...")
+            verbal = json.optString("message", if (isCurrentSessionHindi) "प्रोसेस हो रहा है..." else "Processing...")
         }
         return verbal to json
     }

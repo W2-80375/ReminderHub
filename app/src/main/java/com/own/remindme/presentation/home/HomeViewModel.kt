@@ -128,6 +128,20 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun onReminderSelected(id: Long?) {
+        _uiState.update {
+            it.copy(selectedReminderId = id)
+        }
+        if (id != null) {
+            viewModelScope.launch {
+                val reminder = reminderUseCases.getReminder(id)
+                _uiState.update { it.copy(selectedReminder = reminder) }
+            }
+        } else {
+            _uiState.update { it.copy(selectedReminder = null) }
+        }
+    }
+
     fun onSearchQueryChange(query: String) {
         _uiState.update {
             it.copy(search = query)

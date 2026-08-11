@@ -20,7 +20,11 @@ data class HomeUiState(
 
     val isRefreshing: Boolean = false,
 
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+
+    val selectedReminderId: Long? = null,
+
+    val selectedReminder: com.own.remindme.domain.model.Reminder? = null
 
 ) {
     val todayCount: Int

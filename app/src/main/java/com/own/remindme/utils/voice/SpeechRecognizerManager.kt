@@ -53,7 +53,11 @@ class SpeechRecognizerManager @Inject constructor(
         }
     }
 
-    fun startListening(onResult: (String) -> Unit, onError: ((Int) -> Unit)? = null) {
+    fun startListening(
+        languageTag: String = "en-IN",
+        onResult: (String) -> Unit,
+        onError: ((Int) -> Unit)? = null
+    ) {
         this.onResultCallback = onResult
         this.onErrorCallback = onError
         
@@ -62,10 +66,10 @@ class SpeechRecognizerManager @Inject constructor(
             
             val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
                 putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
-                // Add Hindi and English support explicitly
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-IN")
+                // Use provided language tag as primary
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag)
                 putExtra(RecognizerIntent.EXTRA_SUPPORTED_LANGUAGES, arrayListOf("en-IN", "hi-IN"))
-                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "en-IN")
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, languageTag)
                 putExtra(RecognizerIntent.EXTRA_ONLY_RETURN_LANGUAGE_PREFERENCE, false)
 
                 putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)

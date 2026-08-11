@@ -1,9 +1,11 @@
 package com.own.remindme.presentation.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.material3.windowsizeclass.WindowSizeClass
 import androidx.navigation.compose.*
 import com.own.remindme.presentation.add_reminder.AddReminderScreen
 import com.own.remindme.presentation.detail.ReminderDetailScreen
+import com.own.remindme.presentation.home.AdaptiveHomeScreen
 import com.own.remindme.presentation.home.HomeScreen
 import com.own.remindme.presentation.notifications.NotificationsScreen
 import com.own.remindme.presentation.onboarding.OnboardingScreen
@@ -15,7 +17,7 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 
 @Composable
-fun NavGraph() {
+fun NavGraph(windowSizeClass: WindowSizeClass) {
 
     val navController = rememberNavController()
 
@@ -57,7 +59,8 @@ fun NavGraph() {
 
         composable(Screen.Home.route) {
 
-            HomeScreen(
+            AdaptiveHomeScreen(
+                windowSizeClass = windowSizeClass,
                 onAddReminderClick = {
                     navController.navigate(Screen.AddReminder.route + "?reminderId=-1")
                 },
